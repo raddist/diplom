@@ -296,16 +296,16 @@ void mappedEncode(uint8_t* in, uint8_t* out, int size_in, int &size_out, CoderMa
 	{
 		// right top
 		SubbandRect rightTop(hLeftIndex, hRightIndex, 0, vTopIndex);
-		encodeSubband(rect);
+		encodeSubband(rightTop);
 
 
 		//left bot
 		SubbandRect leftBot(0, hLeftIndex, vTopIndex, vBotIndex);
-		encodeSubband(rect);
+		encodeSubband(leftBot);
 
 		//right bot
 		SubbandRect rightBot(hLeftIndex, hRightIndex, vTopIndex, vBotIndex);
-		encodeSubband(rect);
+		encodeSubband(rightBot);
 
 		hLeftIndex = map.m_hSize[k + 1];
 		vTopIndex = map.m_vSize[k + 1];
