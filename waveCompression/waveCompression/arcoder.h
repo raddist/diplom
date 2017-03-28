@@ -232,9 +232,14 @@ void encode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 //
 void encodeSubband(SubbandRect rect)
 {
+	int horizontalFrom = rect.left;
+	int horizontalTo = rect.right - 1;	// include last pixel in [horizontalFrom horizontalTo]
+	int step = 1;
+
 	for (int j = rect.top; j < rect.bot; ++j)
 	{
-		for (int i = rect.left; i < rect.right; ++i)
+
+		for (int i = horizontalFrom; i*(step) <= horizontalTo*(step); i += step)
 		{
 			int index = j*imgWidth + i;
 			uint8_t symbol = data_in[index];
@@ -242,29 +247,13 @@ void encodeSubband(SubbandRect rect)
 			encode_symbol(symbol, prev_symbol);
 			update_model(symbol, prev_symbol);
 			prev_symbol = symbol;
-
-
 		}
-		/*if (j < vMidIndex)
-		{
-		for (int i = hMidIndex-1; i>=0; --i)
-		{
-		int index = j*imgWidth + i;
-
-		symbol = data_in[index];
-		if (prev_symbol != -1)
-		{
-		encode_symbol(symbol, prev_symbol);
-		update_model(symbol, prev_symbol);
-		}
-		else
-		{
-		encode_symbol(symbol);
-		}
-		prev_symbol = symbol;
-		}
-		j++;
-		}*/
+		
+		// change direction
+		int temp = horizontalFrom;
+		horizontalFrom = horizontalTo;
+		horizontalTo = temp;
+		step *= -1;
 	}
 }
 
@@ -446,14 +435,33 @@ void decode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 }
 
 // 
-int decodeAndUpdate(int index, int prevSymbol)
+void decodeSubband(SubbandRect rect)
 {
-	int symbol = decode_symbol(prevSymbol);
-	update_model(symbol, prevSymbol);
-	data_out[index] = symbol;
-	sizeOut++;
+	int horizontalFrom = rect.left;
+	int horizontalTo = rect.right - 1;	// include last pixel in [horizontalFrom horizontalTo]
+	int step = 1;
 
-	return symbol;
+	for (int j = rect.top; j < rect.bot; ++j)
+	{
+		// *(step) just to move from => to <= and back
+		for (int i = horizontalFrom; i*(step) <= horizontalTo*(step); i += step)
+		{
+			int index = j*imgWidth + i;
+
+			int symbol = decode_symbol(prev_symbol);
+			update_model(symbol, prev_symbol);
+			data_out[index] = symbol;
+			sizeOut++;
+
+			prev_symbol = symbol;
+		}
+
+		// change direction
+		int temp = horizontalFrom;
+		horizontalFrom = horizontalTo;
+		horizontalTo = temp;
+		step *= -1;
+	}
 }
 // @brief декодирование информации в нелинейном порядке
 void mappedDecode(uint8_t* in, uint8_t* out, int size_in, int &size_out, CoderMap map)
@@ -468,145 +476,38 @@ void mappedDecode(uint8_t* in, uint8_t* out, int size_in, int &size_out, CoderMa
 	start_model();
 	start_decoding();
 
-	int hMidIndex = map.m_hSize[0];
-	int vMidIndex = map.m_vSize[0];
-	int hHighIndex = map.m_hSize[1];
-	int vHighIndex = map.m_vSize[1];
+	int hLeftIndex = map.m_hSize[0];
+	int vTopIndex = map.m_vSize[0];
+	int hRightIndex = map.m_hSize[1];
+	int vBotIndex = map.m_vSize[1];
 	int imgWidth = map.m_hSize[map.steps];
 
 	//while ((symbol = decode_symbol(prev_symbol)) != EOF_SYMBOL)
 
 	// read minimal left top subband
-	for (int j = 0; j < vMidIndex; ++j)
-	{
-		for (int i = 0; i < hMidIndex; ++i)
-		{
-			int index = j*imgWidth + i;
-
-			int symbol = decode_symbol(prev_symbol);
-			update_model(symbol, prev_symbol);
-			data_out[index] = symbol;
-			sizeOut++;
-
-			prev_symbol = symbol;
-		}
-		/*if (j < vMidIndex)
-		{
-		for (int i = hMidIndex - 1; i >= 0; --i)
-		{
-		int index = j*imgWidth + i;
-
-		symbol = decode_symbol(prev_symbol);
-		update_model(symbol, prev_symbol);
-		data_out[index] = symbol;
-		sizeOut++;
-
-		prev_symbol = symbol;
-		}
-		j++;
-		}*/
-	}
+	SubbandRect rect(0, hLeftIndex, 0, vTopIndex);
+	decodeSubband(rect);
 
 	// read other data
 	for (int k = 0; k < map.steps; ++k)
 	{
 		// right top
-		for (int j = 0; j < vMidIndex; ++j)
-		{
-			for (int i = hMidIndex; i < hHighIndex; ++i)
-			{
-				int index = j*imgWidth + i;
+		SubbandRect rightTop(hLeftIndex, hRightIndex, 0, vTopIndex);
+		decodeSubband(rightTop);
 
-				symbol = decode_symbol(prev_symbol);
-				update_model(symbol, prev_symbol);
-				data_out[index] = symbol;
-				sizeOut++;
-
-				prev_symbol = symbol;
-			}
-			/*if (j < vMidIndex)
-			{
-			for (int i = hHighIndex - 1; i >= hMidIndex; --i)
-			{
-			int index = j*imgWidth + i;
-
-			symbol = decode_symbol(prev_symbol);
-			update_model(symbol, prev_symbol);
-			data_out[index] = symbol;
-			sizeOut++;
-
-			prev_symbol = symbol;
-			}
-			j++;
-			}*/
-		}
 
 		//left bot
-		for (int j = vMidIndex; j < vHighIndex; ++j)
-		{
-			for (int i = 0; i < hMidIndex; ++i)
-			{
-				int index = j*imgWidth + i;
-
-				symbol = decode_symbol(prev_symbol);
-				update_model(symbol, prev_symbol);
-				data_out[index] = symbol;
-				sizeOut++;
-
-				prev_symbol = symbol;
-			}
-			/*if (j < vHighIndex)
-			{
-			for (int i = hMidIndex - 1; i >= 0; --i)
-			{
-			int index = j*imgWidth + i;
-
-			symbol = decode_symbol(prev_symbol);
-			update_model(symbol, prev_symbol);
-			data_out[index] = symbol;
-			sizeOut++;
-
-			prev_symbol = symbol;
-			}
-			j++;
-			}*/
-		}
+		SubbandRect leftBot(0, hLeftIndex, vTopIndex, vBotIndex);
+		decodeSubband(leftBot);
 
 		//right bot
-		for (int j = vMidIndex; j < vHighIndex; ++j)
-		{
-			for (int i = hMidIndex; i < hHighIndex; ++i)
-			{
-				int index = j*imgWidth + i;
+		SubbandRect rightBot(hLeftIndex, hRightIndex, vTopIndex, vBotIndex);
+		decodeSubband(rightBot);
 
-				symbol = decode_symbol(prev_symbol);
-				update_model(symbol, prev_symbol);
-				data_out[index] = symbol;
-				sizeOut++;
-
-				prev_symbol = symbol;
-			}
-			/*if (j < vHighIndex)
-			{
-			for (int i = hHighIndex - 1; i >= hMidIndex; --i)
-			{
-			int index = j*imgWidth + i;
-
-			symbol = decode_symbol(prev_symbol);
-			update_model(symbol, prev_symbol);
-			data_out[index] = symbol;
-			sizeOut++;
-
-			prev_symbol = symbol;
-			}
-			j++;
-			}*/
-		}
-
-		hMidIndex = map.m_hSize[k + 1];
-		vMidIndex = map.m_vSize[k + 1];
-		hHighIndex = map.m_hSize[(k + 2) % 5];
-		vHighIndex = map.m_vSize[(k + 2) % 5];
+		hLeftIndex = map.m_hSize[k + 1];
+		vTopIndex = map.m_vSize[k + 1];
+		hRightIndex = map.m_hSize[(k + 2) % 5];
+		vBotIndex = map.m_vSize[(k + 2) % 5];
 	}
 
 	size_out = sizeOut;
