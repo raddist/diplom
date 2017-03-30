@@ -32,13 +32,14 @@ void encode(void)
 	// encode
 	uint8_t* encoded = new uint8_t[img_size];
 	int out_size = 0;
-	encode(post, encoded, img_size, out_size);
+	Arcoder coder(post);
+	coder.encode(post, encoded, img_size, out_size);
 
 	// mapped encode
 	uint8_t* m_encoded = new uint8_t[img_size];
 	int m_out_size = 0;
 	CoderMap map(img.GetWidth(), img.GetHeight(), 4);
-	mappedEncode(post, m_encoded, img_size, m_out_size, map);
+	coder.mappedEncode(post, m_encoded, map, m_out_size);
 
 	// write encoded data in file
 	FILE* temp = fopen("encoded.bin", "w+b");
@@ -53,20 +54,12 @@ void encode(void)
 	// decode
 	uint8_t* decoded = new uint8_t[img_size];
 	int foundedSize = 0;
-	decode(encoded, decoded, out_size, foundedSize);
+	coder.decode(encoded, decoded, out_size, foundedSize);
 
 	// decode
 	uint8_t* m_decoded = new uint8_t[img_size];
 	int m_foundedSize = 0;
-	mappedDecode(m_encoded, m_decoded, m_out_size, m_foundedSize, map);
-
-	for (int i = 0; i < img_size; ++i)
-	{
-		if (encoded[i] != post[i])
-		{
-			int temp = 1;
-		}
-	}
+	coder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
 
 	// dequant
 	quant.deQuantArray(m_decoded, output, m_foundedSize);
@@ -80,7 +73,7 @@ void encode(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-void qSchedule(double i_q)
+void qSchedule(double i_qConst)
 {
 	BmpImage img(in, 1);
 	int img_size = img.GetHeight() * img.GetHeight();
@@ -93,25 +86,40 @@ void qSchedule(double i_q)
 	wvlt.transform2d(input, output, 512, 512, 4);
 
 	// quant
-	Quantor quant(static_cast<double*>(output), img_size);
+	Quantor quant(i_qConst);
 	uint8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
+
+	// encode
+	uint8_t* encoded = new uint8_t[img_size];
+	int out_size = 0;
+	Arcoder coder(post);
+	coder.encode(post, encoded, img_size, out_size);
 
 	// mapped encode
 	uint8_t* m_encoded = new uint8_t[img_size];
 	int m_out_size = 0;
 	CoderMap map(img.GetWidth(), img.GetHeight(), 4);
-	mappedEncode(post, m_encoded, img_size, m_out_size, map);
+	coder.mappedEncode(post, m_encoded, map, m_out_size);
+
+	// write encoded data in file
+	FILE* temp = fopen("encoded.bin", "w+b");
+	fwrite(encoded, 1, out_size, temp);
+	fclose(temp);
 
 	// write map encoded data in file
 	FILE* m_temp = fopen("map_encoded.bin", "w+b");
 	fwrite(m_encoded, 1, m_out_size, m_temp);
 	fclose(m_temp);
 
-	// mapped ecode
+	// decode
+	uint8_t* decoded = new uint8_t[img_size];
+	int foundedSize = 0;
+	coder.decode(encoded, decoded, out_size, foundedSize);
+
+	// mapped decode
 	uint8_t* m_decoded = new uint8_t[img_size];
 	int m_foundedSize = 0;
-	mappedDecode(m_encoded, m_decoded, m_out_size, m_foundedSize, map);
-
+	coder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
 
 	// dequant
 	quant.deQuantArray(m_decoded, output, m_foundedSize);
