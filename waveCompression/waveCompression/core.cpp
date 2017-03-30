@@ -25,12 +25,9 @@ void encode(void)
 	wvlt.transform2d(input, output, 512, 512, 4);
 
 	// quant
-	double min = 0;
-	double max = 0;
-	findMinMax(output, img_size, min, max);
-	double q = findQ(min, max);
+	Quantor quant(static_cast<double*>(output), img_size);
 
-	uint8_t* post = quantArray(q, static_cast<double*>(output), img_size);
+	uint8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
 
 	// encode
 	uint8_t* encoded = new uint8_t[img_size];
@@ -72,25 +69,63 @@ void encode(void)
 	}
 
 	// dequant
-	deQuantArray(q, m_decoded, output, foundedSize);
+	quant.deQuantArray(m_decoded, output, m_foundedSize);
 
 	// invert
 	wvlt.invert2d(output, input, img.GetWidth(), img.GetHeight(), 4);
 
 	img.SetDataFromDouble(static_cast<double*>(input));
-	uint8_t umin = 0;
-	uint8_t umax = 0;
-	findMinMax(img.GetUint8tData(), img_size, umin, umax);
 
+	img.WriteBmp(out);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+void qSchedule(double i_q)
+{
+	BmpImage img(in, 1);
+	int img_size = img.GetHeight() * img.GetHeight();
+
+	Real* input = static_cast<Real*>(img.GetDoubleData());
+	Real *output = new Real[img_size];
+
+	//using wavelet
+	Wavelet wvlt(&Antonini);
+	wvlt.transform2d(input, output, 512, 512, 4);
+
+	// quant
+	Quantor quant(static_cast<double*>(output), img_size);
+	uint8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
+
+	// mapped encode
+	uint8_t* m_encoded = new uint8_t[img_size];
+	int m_out_size = 0;
+	CoderMap map(img.GetWidth(), img.GetHeight(), 4);
+	mappedEncode(post, m_encoded, img_size, m_out_size, map);
+
+	// write map encoded data in file
+	FILE* m_temp = fopen("map_encoded.bin", "w+b");
+	fwrite(m_encoded, 1, m_out_size, m_temp);
+	fclose(m_temp);
+
+	// mapped ecode
+	uint8_t* m_decoded = new uint8_t[img_size];
+	int m_foundedSize = 0;
+	mappedDecode(m_encoded, m_decoded, m_out_size, m_foundedSize, map);
+
+
+	// dequant
+	quant.deQuantArray(m_decoded, output, m_foundedSize);
+
+	// invert
+	wvlt.invert2d(output, input, img.GetWidth(), img.GetHeight(), 4);
+	img.SetDataFromDouble(static_cast<double*>(input));
 	img.WriteBmp(out);
 }
 
 void _cdecl main(int argc, char **argv)
 {
 	printf("\nAlpha version of arithmetic Codec 2\n");
-	if (argc != 4 || argv[1][0] != 'e' && argv[1][0] != 'd')
-		printf("\nUsage: arcode e|d infile outfile \n");
-	else if ((in = fopen(argv[2], "r+b")) == NULL)
+	if ((in = fopen(argv[2], "r+b")) == NULL)
 		printf("\nIncorrect input file\n");
 	else if ((out = fopen(argv[3], "w+b")) == NULL)
 		printf("\nIncorrect output file\n");
@@ -98,6 +133,7 @@ void _cdecl main(int argc, char **argv)
 	{
 		int a = 0;
 		if (argv[1][0] == 'e') encode();
+		if (argv[1][0] == 'q') qSchedule(atof(argv[4]));
 		fclose(in);
 		fclose(out);
 	}

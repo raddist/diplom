@@ -157,6 +157,7 @@
     <ClCompile Include="core.cpp" />
     <ClCompile Include="filter.cpp" />
     <ClCompile Include="global.cpp" />
+    <ClCompile Include="quantor.cpp" />
     <ClCompile Include="wavelet.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
