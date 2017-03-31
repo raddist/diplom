@@ -17,10 +17,10 @@
 #define EOF_SYMBOL					NO_OF_CHARS			// char-коды: 0..NO_OF_CHARS-1 
 #define NO_OF_SYMBOLS				(NO_OF_CHARS+1)		// + EOF_SYMBOL
 
-class CoderMap
+class SubbandMap
 {
 public:
-	CoderMap(int hSize, int vSize, int i_steps)
+	SubbandMap(int hSize, int vSize, int i_steps)
 	{
 		int levels = i_steps + 1;
 
@@ -35,7 +35,7 @@ public:
 		steps = i_steps;
 	}
 
-	~CoderMap()
+	~SubbandMap()
 	{};
 
 public:
@@ -64,20 +64,9 @@ public:
 
 class Arcoder
 {
-	unsigned long						low, high, value;
-	uint8_t								buffer, bits_to_go;
-	int									garbage_bits, bits_to_follow;
-	unsigned int						cum_freq[NO_OF_CHARS][NO_OF_SYMBOLS + 1];	//интервалы частот символов
-																					// относительна€ частота по€влени€ символа s (оценка веро€тности его по€влени€)
-																					// определ€етс€ как p(s)=(cum_freq[s+1]-cum_freq[s])/cum_freq[NO_OF_SYMBOLS]
-	uint8_t *data_in, *data_out;
-	int sizeOut, sizeIn = 0;
-	uint8_t prev_symbol;
-	int imgWidth;
-
 public:
 
-	Arcoder(uint8_t* in);
+	Arcoder();
 
 	// @brief инициализаци€ массива частот
 	void start_model(void);
@@ -115,7 +104,7 @@ public:
 	void encodeSubband(SubbandRect rect);
 
 	// @brief кодирование информации в нелинейном пор€дке
-	void mappedEncode(uint8_t* in, uint8_t* out, CoderMap map, int &size_out);
+	void mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -139,7 +128,7 @@ public:
 	void decodeSubband(SubbandRect rect);
 
 	// @brief декодирование информации в нелинейном пор€дке
-	void mappedDecode(uint8_t* in, uint8_t* out, CoderMap map, int &size_out);
+	void mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -148,11 +137,25 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// @brief кодирование информации в нелинейном пор€дке
-	void oneModelMappedEncode(uint8_t* in, uint8_t* out, CoderMap i_map, int &size_out);
+	void oneModelMappedEncode(uint8_t* in, uint8_t* out, SubbandMap i_map, int &size_out);
 
 	// @brief декодирование информации в нелинейном пор€дке
-	void oneModelMappedDecode(uint8_t* in, uint8_t* out, CoderMap i_map, int &size_out);
+	void oneModelMappedDecode(uint8_t* in, uint8_t* out, SubbandMap i_map, int &size_out);
+
+protected:
+	bool m_isOneModel = false;
+
+	unsigned long						low, high, value;
+	uint8_t								buffer, bits_to_go;
+	int									garbage_bits, bits_to_follow;
+	
+	uint8_t *data_in, *data_out;
+	int sizeOut, sizeIn = 0;
+	uint8_t prev_symbol;
+	int imgWidth;
 
 private:
-	bool m_isOneModel = false;
+	unsigned int						cum_freq[NO_OF_CHARS][NO_OF_SYMBOLS + 1];	//интервалы частот символов
+																					// относительна€ частота по€влени€ символа s (оценка веро€тности его по€влени€)
+																					// определ€етс€ как p(s)=(cum_freq[s+1]-cum_freq[s])/cum_freq[NO_OF_SYMBOLS]
 };

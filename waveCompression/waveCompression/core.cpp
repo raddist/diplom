@@ -38,7 +38,7 @@ void encode(void)
 	// mapped encode
 	uint8_t* m_encoded = new uint8_t[img_size];
 	int m_out_size = 0;
-	CoderMap map(img.GetWidth(), img.GetHeight(), 4);
+	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 	coder.mappedEncode(post, m_encoded, map, m_out_size);
 
 	// write encoded data in file
@@ -92,13 +92,13 @@ void qSchedule(double i_qConst)
 	// encode
 	uint8_t* encoded = new uint8_t[img_size];
 	int out_size = 0;
-	Arcoder coder(post);
+	Arcoder coder;
 	coder.encode(post, encoded, img_size, out_size);
 
 	// mapped encode
 	uint8_t* m_encoded = new uint8_t[img_size];
 	int m_out_size = 0;
-	CoderMap map(img.GetWidth(), img.GetHeight(), 4);
+	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 	coder.mappedEncode(post, m_encoded, map, m_out_size);
 
 	// write encoded data in file

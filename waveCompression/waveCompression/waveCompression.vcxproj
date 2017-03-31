@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClInclude Include="arcoder.h" />
     <ClInclude Include="bmpStream.h" />
+    <ClInclude Include="contextArcoder.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="quantor.h" />
     <ClInclude Include="wavelet.h" />

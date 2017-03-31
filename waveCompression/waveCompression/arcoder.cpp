@@ -6,8 +6,7 @@
 
 #pragma warning(disable: 4996)
 
-Arcoder::Arcoder(uint8_t* in):
-	data_in(in)
+Arcoder::Arcoder()
 {
 }
 
@@ -192,7 +191,7 @@ void Arcoder::encodeSubband(SubbandRect rect)
 }
 
 // @brief кодирование информации в нелинейном порядке
-void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, CoderMap map, int &size_out)
+void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -396,7 +395,7 @@ void Arcoder::decodeSubband(SubbandRect rect)
 }
 
 // @brief декодирование информации в нелинейном порядке
-void Arcoder::mappedDecode(uint8_t* in, uint8_t* out, CoderMap map, int &size_out)
+void Arcoder::mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -449,7 +448,7 @@ void Arcoder::mappedDecode(uint8_t* in, uint8_t* out, CoderMap map, int &size_ou
 /////////////////////////////////////////////////////////////////////////////////////////
 
 // @brief кодирование информации в нелинейном порядке
-void Arcoder::oneModelMappedEncode(uint8_t* in, uint8_t* out, CoderMap i_map, int &size_out)
+void Arcoder::oneModelMappedEncode(uint8_t* in, uint8_t* out, SubbandMap i_map, int &size_out)
 {
 	// let's prev_symbol be always 1
 	m_isOneModel = true;
@@ -458,7 +457,7 @@ void Arcoder::oneModelMappedEncode(uint8_t* in, uint8_t* out, CoderMap i_map, in
 }
 
 // @brief декодирование информации в нелинейном порядке
-void Arcoder::oneModelMappedDecode(uint8_t* in,uint8_t* out, CoderMap i_map, int &size_out)
+void Arcoder::oneModelMappedDecode(uint8_t* in,uint8_t* out, SubbandMap i_map, int &size_out)
 {
 	// let's prev_symbol be always 1
 	m_isOneModel = true;
