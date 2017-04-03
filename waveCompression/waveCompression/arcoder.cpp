@@ -10,6 +10,14 @@ Arcoder::Arcoder()
 {
 }
 
+Arcoder::Arcoder(int i_memoryLen)
+{
+	if (i_memoryLen != 0)
+	{
+		m_isOneModel = false;
+	}
+}
+
 // @brief инициализация массива частот
 void Arcoder::start_model(void)
 {
@@ -24,19 +32,26 @@ void Arcoder::start_model(void)
 // @param symbol - in, поступивший символ
 inline void Arcoder::update_model(int symbol)
 {
-	if (cum_freq[prev_symbol][NO_OF_SYMBOLS] == MAX_FREQUENCY)
+	if (cum_freq[m_currentModel][NO_OF_SYMBOLS] == MAX_FREQUENCY)
 	{	//	масштабируем частотные интервалы, уменьшая их в 2 раза
 		int cum = 0;
 		for (int i = 0; i < NO_OF_SYMBOLS; i++)
 		{
-			int fr = (cum_freq[prev_symbol][i + 1] - cum_freq[prev_symbol][i] + 1) >> 1;
-			cum_freq[prev_symbol][i] = cum;
+			int fr = (cum_freq[m_currentModel][i + 1] - cum_freq[m_currentModel][i] + 1) >> 1;
+			cum_freq[m_currentModel][i] = cum;
 			cum += fr;
 		}
-		cum_freq[prev_symbol][NO_OF_SYMBOLS] = cum;
+		cum_freq[m_currentModel][NO_OF_SYMBOLS] = cum;
 	}
 	// обновление интервалов частот
-	for (int i = symbol + 1; i <= NO_OF_SYMBOLS; i++) cum_freq[prev_symbol][i]++;
+	for (int i = symbol + 1; i <= NO_OF_SYMBOLS; i++) cum_freq[m_currentModel][i]++;
+
+	// update previous symbol
+
+	if (!m_isOneModel)
+	{
+		m_currentModel = symbol;
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +67,8 @@ void Arcoder::start_encoding(void)
 	bits_to_follow = 0;				// число бит, вывод которых отложен
 	low = 0;				// нижняя граница интервала
 	high = TOP_VALUE;		// верхняя граница интервала
+
+	m_currentModel = 0;
 }
 
 // @brief вывод одного бита в сжатый файл
@@ -97,8 +114,8 @@ void Arcoder::encode_symbol(int symbol)
 	// пересчет границ интервала
 	unsigned long range;
 	range = high - low + 1;
-	high = low + range*cum_freq[prev_symbol][symbol + 1] / cum_freq[prev_symbol][NO_OF_SYMBOLS] - 1;
-	low = low + range*cum_freq[prev_symbol][symbol] / cum_freq[prev_symbol][NO_OF_SYMBOLS];
+	high = low + range*cum_freq[m_currentModel][symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
+	low = low + range*cum_freq[m_currentModel][symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
 	// далее при необходимости - вывод бита или меры от зацикливания
 	for (;;)
 	{			// Замечание: всегда low<high
@@ -134,7 +151,6 @@ void Arcoder::encode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 	data_out = out;
 
 	uint8_t symbol;
-	int prev_symbol = 0;
 	start_model();
 	start_encoding();
 
@@ -146,8 +162,6 @@ void Arcoder::encode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 		symbol = data_in[i];
 		encode_symbol(symbol);
 		update_model(symbol);
-
-		prev_symbol = symbol;
 	}
 
 	encode_symbol(EOF_SYMBOL);
@@ -175,11 +189,6 @@ void Arcoder::encodeSubband(SubbandRect rect)
 
 			encode_symbol(symbol);
 			update_model(symbol);
-
-			if (!m_isOneModel)
-			{
-				prev_symbol = symbol;
-			}
 		}
 
 		// change direction
@@ -195,7 +204,6 @@ void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_
 {
 	data_in = in;
 	data_out = out;
-	prev_symbol = 0;
 
 	int hLeftIndex = map.m_hSize[0];
 	int vTopIndex = map.m_vSize[0];
@@ -205,8 +213,6 @@ void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_
 
 	start_model();
 	start_encoding();
-
-	int size = 0;
 
 	// read minimal left top subband
 	SubbandRect rect(0, hLeftIndex, 0, vTopIndex);
@@ -237,8 +243,8 @@ void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_
 	encode_symbol(EOF_SYMBOL);
 	done_encoding();
 
-	sizeIn = 0;
 	size_out = sizeOut;
+	sizeIn = 0;
 	sizeOut = 0;
 }
 
@@ -292,6 +298,8 @@ void Arcoder::start_decoding(void)
 	high = TOP_VALUE;		// верхняя граница интервала
 	value = 0;				// "ЧИСЛО"
 	for (int i = 0; i<BITS_IN_REGISTER; i++) value = (value << 1) + input_bit();
+
+	m_currentModel = 0;
 }
 
 // @brief декодирование символа
@@ -302,12 +310,12 @@ int Arcoder::decode_symbol()
 	range = high - low + 1;
 	// число cum - это число value, пересчитанное из интервала
 	// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
-	cum = ((value - low + 1)*cum_freq[prev_symbol][NO_OF_SYMBOLS] - 1) / range;
+	cum = ((value - low + 1)*cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1) / range;
 	// поиск интервала, соответствующего числу cum
-	for (symbol = 0; cum_freq[prev_symbol][symbol + 1] <= cum; symbol++);
+	for (symbol = 0; cum_freq[m_currentModel][symbol + 1] <= cum; symbol++);
 	// пересчет границ
-	high = low + range*cum_freq[prev_symbol][symbol + 1] / cum_freq[prev_symbol][NO_OF_SYMBOLS] - 1;
-	low = low + range*cum_freq[prev_symbol][symbol] / cum_freq[prev_symbol][NO_OF_SYMBOLS];
+	high = low + range*cum_freq[m_currentModel][symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
+	low = low + range*cum_freq[m_currentModel][symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
 	for (;;)
 	{		// подготовка к декодированию следующих символов
 		if (high<HALF) {/* Старшие биты low и high - нулевые */ }
@@ -334,12 +342,10 @@ int Arcoder::decode_symbol()
 // @brief декодирование информации
 void Arcoder::decode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 {
-	sizeIn = 0;
 	data_in = in;
 	data_out = out;
 
 	int symbol;
-	int prev_symbol = 0;
 	start_model();
 	start_decoding();
 
@@ -349,11 +355,6 @@ void Arcoder::decode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 		*data_out = symbol;
 		data_out++;
 		sizeOut++;
-
-		if (m_isOneModel)
-		{
-			prev_symbol = symbol;
-		}
 	}
 
 	sizeIn = 0;
@@ -379,11 +380,6 @@ void Arcoder::decodeSubband(SubbandRect rect)
 			update_model(symbol);
 			data_out[index] = symbol;
 			sizeOut++;
-
-			if (!m_isOneModel)
-			{
-				prev_symbol = symbol;
-			}
 		}
 
 		// change direction
@@ -399,8 +395,6 @@ void Arcoder::mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_
 {
 	data_in = in;
 	data_out = out;
-	int symbol;
-	prev_symbol = 0;
 	start_model();
 	start_decoding();
 
@@ -439,28 +433,4 @@ void Arcoder::mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_
 	sizeIn = 0;
 	size_out = sizeOut;
 	sizeOut = 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////
-/////////////////
-/////////////////	one model encoding -- decoding
-/////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-
-// @brief кодирование информации в нелинейном порядке
-void Arcoder::oneModelMappedEncode(uint8_t* in, uint8_t* out, SubbandMap i_map, int &size_out)
-{
-	// let's prev_symbol be always 1
-	m_isOneModel = true;
-	mappedEncode(in, out, i_map, size_out);
-	m_isOneModel = false;
-}
-
-// @brief декодирование информации в нелинейном порядке
-void Arcoder::oneModelMappedDecode(uint8_t* in,uint8_t* out, SubbandMap i_map, int &size_out)
-{
-	// let's prev_symbol be always 1
-	m_isOneModel = true;
-	mappedDecode(in, out, i_map, size_out);
-	m_isOneModel = false;
 }

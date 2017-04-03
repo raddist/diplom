@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClCompile Include="arcoder.cpp" />
     <ClCompile Include="bmpStream.cpp" />
+    <ClCompile Include="contextArcoder.cpp" />
     <ClCompile Include="core.cpp" />
     <ClCompile Include="filter.cpp" />
     <ClCompile Include="global.cpp" />

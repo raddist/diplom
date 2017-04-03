@@ -6,12 +6,13 @@
 #include "bmpStream.h"
 #include "quantor.h"
 #include "arcoder.h"
+#include "contextArcoder.h"
 
 #pragma warning(disable: 4996)
 FILE *in, *out;
 
 // @brief кодирование информации
-void encode(void)
+void encode()
 {
 	BmpImage img(in, 1);
 	int img_size = img.GetHeight() * img.GetHeight();
@@ -32,14 +33,27 @@ void encode(void)
 	// encode
 	uint8_t* encoded = new uint8_t[img_size];
 	int out_size = 0;
-	Arcoder coder(post);
+	Arcoder coder;
+	Arcoder Mcoder(1);
 	coder.encode(post, encoded, img_size, out_size);
 
 	// mapped encode
 	uint8_t* m_encoded = new uint8_t[img_size];
 	int m_out_size = 0;
 	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
-	coder.mappedEncode(post, m_encoded, map, m_out_size);
+	Mcoder.mappedEncode(post, m_encoded, map, m_out_size);
+
+	// context encode
+	double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	double ctemp1[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	Context3x3 context;
+	context.maskD = ctemp;
+	context.maskH = ctemp1;
+	context.maskV = ctemp1;
+	ContextArcoder Carcoder(context);
+	uint8_t* c_encoded = new uint8_t[img_size];
+	int c_out_size = 0;
+	//Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
 
 	// write encoded data in file
 	FILE* temp = fopen("encoded.bin", "w+b");
@@ -59,7 +73,12 @@ void encode(void)
 	// decode
 	uint8_t* m_decoded = new uint8_t[img_size];
 	int m_foundedSize = 0;
-	coder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
+	Mcoder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
+
+	// context decode
+	//uint8_t* c_decoded = new uint8_t[img_size];
+	//int c_foundedSize = 0;
+	//Carcoder.decode(c_encoded, c_decoded, map, m_foundedSize);
 
 	// dequant
 	quant.deQuantArray(m_decoded, output, m_foundedSize);
@@ -70,6 +89,14 @@ void encode(void)
 	img.SetDataFromDouble(static_cast<double*>(input));
 
 	img.WriteBmp(out);
+
+	delete[] m_decoded;
+	delete[] m_encoded;
+	delete[] post;
+	delete[] encoded;
+	delete[] decoded;
+	delete[] input;
+	delete[] output;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,13 +120,14 @@ void qSchedule(double i_qConst)
 	uint8_t* encoded = new uint8_t[img_size];
 	int out_size = 0;
 	Arcoder coder;
+	Arcoder Mcoder(1);
 	coder.encode(post, encoded, img_size, out_size);
 
 	// mapped encode
 	uint8_t* m_encoded = new uint8_t[img_size];
 	int m_out_size = 0;
 	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
-	coder.mappedEncode(post, m_encoded, map, m_out_size);
+	Mcoder.mappedEncode(post, m_encoded, map, m_out_size);
 
 	// write encoded data in file
 	FILE* temp = fopen("encoded.bin", "w+b");
@@ -119,7 +147,7 @@ void qSchedule(double i_qConst)
 	// mapped decode
 	uint8_t* m_decoded = new uint8_t[img_size];
 	int m_foundedSize = 0;
-	coder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
+	Mcoder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
 
 	// dequant
 	quant.deQuantArray(m_decoded, output, m_foundedSize);

@@ -68,12 +68,15 @@ public:
 
 	Arcoder();
 
+	// memory arcoder ctor
+	Arcoder(int i_memoryLen);
+
 	// @brief инициализация массива частот
-	void start_model(void);
+	virtual void start_model(void);
 
 	// @brief обновление массива частот
 	// @param symbol - in, поступивший символ
-	inline void update_model(int symbol);
+	inline virtual void update_model(int symbol);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -82,29 +85,29 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// @brief инициализация глобальных переменных
-	void start_encoding(void);
+	virtual void start_encoding(void);
 
 	// @brief вывод одного бита в сжатый файл
-	inline void output_bit(int bit);
+	inline virtual  void output_bit(int bit);
 
 	// @brief вывод одного очередного бита и тех, которые были отложены
-	inline void output_bit_plus_follow(int bit);
+	inline virtual  void output_bit_plus_follow(int bit);
 
 	// @brief завершение кодирования
-	void done_encoding(void);
+	virtual void done_encoding(void);
 
 	// @brief кодирование символа
 	// @param symbol - in, поступивший символ
-	void encode_symbol(int symbol);
+	virtual void encode_symbol(int symbol);
 
 	// @brief кодирование информации
-	void encode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
+	virtual void encode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
 
 	//
-	void encodeSubband(SubbandRect rect);
+	virtual void encodeSubband(SubbandRect rect);
 
 	// @brief кодирование информации в нелинейном порядке
-	void mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
+	virtual void mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -113,49 +116,35 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// @brief ввод 1 бита из сжатого файла
-	inline int input_bit(void);
+	inline virtual  int input_bit(void);
 
 	// @brief инициализация глобальных переменных
-	void start_decoding(void);
+	virtual void start_decoding(void);
 
 	// @brief декодирование символа
-	int decode_symbol();
+	virtual int decode_symbol();
 
 	// @brief декодирование информации
-	void decode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
+	virtual void decode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
 
 	// 
-	void decodeSubband(SubbandRect rect);
+	virtual void decodeSubband(SubbandRect rect);
 
 	// @brief декодирование информации в нелинейном порядке
-	void mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/////
-	///// one-model encoding/decoding
-	/////
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	// @brief кодирование информации в нелинейном порядке
-	void oneModelMappedEncode(uint8_t* in, uint8_t* out, SubbandMap i_map, int &size_out);
-
-	// @brief декодирование информации в нелинейном порядке
-	void oneModelMappedDecode(uint8_t* in, uint8_t* out, SubbandMap i_map, int &size_out);
+	virtual void mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
 
 protected:
-	bool m_isOneModel = false;
-
 	unsigned long						low, high, value;
 	uint8_t								buffer, bits_to_go;
 	int									garbage_bits, bits_to_follow;
 	
 	uint8_t *data_in, *data_out;
 	int sizeOut, sizeIn = 0;
-	uint8_t prev_symbol;
-	int imgWidth;
+	int imgWidth, imgHeight;
+	int m_currentModel;				//< model to encode/decode next symbol
+	bool m_isOneModel;				//< if true
 
-private:
-	unsigned int						cum_freq[NO_OF_CHARS][NO_OF_SYMBOLS + 1];	//интервалы частот символов
+	unsigned int						cum_freq[NO_OF_SYMBOLS][NO_OF_SYMBOLS + 1];	//интервалы частот символов
 																					// относительная частота появления символа s (оценка вероятности его появления)
 																					// определяется как p(s)=(cum_freq[s+1]-cum_freq[s])/cum_freq[NO_OF_SYMBOLS]
 };
