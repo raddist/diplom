@@ -30,3 +30,8 @@
 
 # directories
 Debug/*
+
+# binaries
+*.bin
+*.pdb
+*.idb
