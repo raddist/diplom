@@ -13,6 +13,8 @@ ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	limits.push_back(0.1);
 	limits.push_back(1);
 	limits.push_back(2);
+
+	m_isOneModel = false;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -83,12 +85,12 @@ void ContextArcoder::encode(uint8_t* in, uint8_t* out, SubbandMap map, int size_
 	// read minimal left top subband
 	SubbandRect rect(0, hLeftIndex, 0, vTopIndex);
 	encodeSubband(rect);
+	reset_model();
 
 	// encode top row and left col
-	m_currentModel = data_in[hLeftIndex - 1];
 	encodeTopRow(hLeftIndex, imgWidth);
+	reset_model();
 
-	m_currentModel = data_in[imgWidth*(vBotIndex - 1)];
 	encodeLeftColumn(vTopIndex, imgHeight);
 	reset_model();
 
@@ -130,11 +132,10 @@ void ContextArcoder::encodeSubband(SubbandRect rect)
 {
 	int horizontalFrom = rect.left;
 	int horizontalTo = rect.right - 1;	// include last pixel in [horizontalFrom horizontalTo]
-	int step = 1;
 
 	for (int j = rect.top; j < rect.bot; ++j)
 	{
-		for (int i = horizontalFrom; i*(step) <= horizontalTo*(step); i += step)
+		for (int i = horizontalFrom; i <= horizontalTo; ++i)
 		{
 			int index = j*imgWidth + i;
 
@@ -147,12 +148,6 @@ void ContextArcoder::encodeSubband(SubbandRect rect)
 				encodeSymbolByContext(index);
 			}
 		}
-
-		// change direction
-		int temp = horizontalFrom;
-		horizontalFrom = horizontalTo;
-		horizontalTo = temp;
-		step *= -1;
 	}
 }
 
@@ -223,18 +218,18 @@ void ContextArcoder::decode(uint8_t* in, uint8_t* out, SubbandMap map, int &size
 	imgHeight = map.m_vSize[map.steps];
 
 	start_model();
-	start_encoding();
+	start_decoding();
 
 	// read minimal left top subband
 	SubbandRect rect(0, hLeftIndex, 0, vTopIndex);
 	decodeSubband(rect);
+	reset_model();
 
 	// decode top row and left col
-	m_currentModel = data_in[hLeftIndex - 1];
-	decodeTopRow(hRightIndex, imgWidth);
+	decodeTopRow(hLeftIndex, imgWidth);
+	reset_model();
 
-	m_currentModel = data_in[imgWidth*(vBotIndex-1)];
-	decodeLeftColumn(vBotIndex, imgHeight);
+	decodeLeftColumn(vTopIndex, imgHeight);
 	reset_model();
 
 	// read other data
@@ -272,11 +267,10 @@ void ContextArcoder::decodeSubband(SubbandRect rect)
 {
 	int horizontalFrom = rect.left;
 	int horizontalTo = rect.right - 1;	// include last pixel in [horizontalFrom horizontalTo]
-	int step = 1;
 
 	for (int j = rect.top; j < rect.bot; ++j)
 	{
-		for (int i = horizontalFrom; i*(step) <= horizontalTo*(step); i += step)
+		for (int i = horizontalFrom; i <= horizontalTo; ++i)
 		{
 			int index = j*imgWidth + i;
 
@@ -289,12 +283,6 @@ void ContextArcoder::decodeSubband(SubbandRect rect)
 				decodeSymbolByContext(index);
 			}
 		}
-
-		// change direction
-		int temp = horizontalFrom;
-		horizontalFrom = horizontalTo;
-		horizontalTo = temp;
-		step *= -1;
 	}
 }
 

@@ -53,7 +53,7 @@ void encode()
 	ContextArcoder Carcoder(context);
 	uint8_t* c_encoded = new uint8_t[img_size];
 	int c_out_size = 0;
-	//Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
+	Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
 
 	// write encoded data in file
 	FILE* temp = fopen("encoded.bin", "w+b");
@@ -76,12 +76,12 @@ void encode()
 	Mcoder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
 
 	// context decode
-	//uint8_t* c_decoded = new uint8_t[img_size];
-	//int c_foundedSize = 0;
-	//Carcoder.decode(c_encoded, c_decoded, map, m_foundedSize);
+	uint8_t* c_decoded = new uint8_t[img_size];
+	int c_foundedSize = 0;
+	Carcoder.decode(c_encoded, c_decoded, map, c_foundedSize);
 
 	// dequant
-	quant.deQuantArray(m_decoded, output, m_foundedSize);
+	quant.deQuantArray(c_decoded, output, m_foundedSize);
 
 	// invert
 	wvlt.invert2d(output, input, img.GetWidth(), img.GetHeight(), 4);

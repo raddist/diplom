@@ -26,6 +26,7 @@ void Arcoder::start_model(void)
 		// исходно все символы в сообщении считаем равновероятными 
 		for (int i = 0; i <= NO_OF_SYMBOLS; i++)	cum_freq[k][i] = i;
 	}
+	m_currentModel = 0;
 }
 
 // @brief обновление массива частот
