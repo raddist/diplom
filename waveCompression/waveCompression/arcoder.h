@@ -101,13 +101,13 @@ public:
 	virtual void encode_symbol(int symbol);
 
 	// @brief кодирование информации
-	virtual void encode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
+	virtual void encode(int8_t* in, int8_t* out, int size_in, int &size_out);
 
 	//
 	virtual void encodeSubband(SubbandRect rect);
 
 	// @brief кодирование информации в нелинейном порядке
-	virtual void mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
+	virtual void mappedEncode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -125,20 +125,20 @@ public:
 	virtual int decode_symbol();
 
 	// @brief декодирование информации
-	virtual void decode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
+	virtual void decode(int8_t* in, int8_t* out, int size_in, int &size_out);
 
 	// 
 	virtual void decodeSubband(SubbandRect rect);
 
 	// @brief декодирование информации в нелинейном порядке
-	virtual void mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
+	virtual void mappedDecode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
 
 protected:
 	unsigned long						low, high, value;
-	uint8_t								buffer, bits_to_go;
+	int8_t								buffer, bits_to_go;
 	int									garbage_bits, bits_to_follow;
 	
-	uint8_t *data_in, *data_out;
+	int8_t *data_in, *data_out;
 	int sizeOut, sizeIn = 0;
 	int imgWidth, imgHeight;
 	int m_currentModel;				//< model to encode/decode next symbol

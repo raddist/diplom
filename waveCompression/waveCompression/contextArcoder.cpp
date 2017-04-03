@@ -25,7 +25,7 @@ void ContextArcoder::reset_model(void)
 }
 
 ///////////////////////////////////////////////////////////////////////
-double ContextArcoder::calcP(int index, uint8_t *decoded_data)
+double ContextArcoder::calcP(int index, int8_t *decoded_data)
 {
 	double sum = 0;
 	for (int j = 0; j < 3; ++j)
@@ -67,7 +67,7 @@ int ContextArcoder::findModelByP(double p)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encode(uint8_t* in, uint8_t* out, SubbandMap map, int size_in, int &size_out)
+void ContextArcoder::encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -205,7 +205,7 @@ void ContextArcoder::encodeSymbolByContext(int index)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
+void ContextArcoder::decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;

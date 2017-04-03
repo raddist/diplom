@@ -146,12 +146,12 @@ void Arcoder::encode_symbol(int symbol)
 }
 
 // @brief кодирование информации
-void Arcoder::encode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
+void Arcoder::encode(int8_t* in, int8_t* out, int size_in, int &size_out)
 {
 	data_in = in;
 	data_out = out;
 
-	uint8_t symbol;
+	int8_t symbol;
 	start_model();
 	start_encoding();
 
@@ -201,7 +201,7 @@ void Arcoder::encodeSubband(SubbandRect rect)
 }
 
 // @brief кодирование информации в нелинейном порядке
-void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
+void Arcoder::mappedEncode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -261,10 +261,8 @@ inline int Arcoder::input_bit(void)
 	if (bits_to_go == 0)
 	{
 		buffer = *data_in;	// заполняем буфер битового ввода
-		uint8_t temp = data_in[7212 - 1];
 		data_in++;
 		sizeIn++;
-		temp = data_in[7212 - 1 - sizeIn];
 		if (buffer == EOF)	// входной поток сжатых данных исчерпан !!!
 		{
 			// Причина попытки дальнейшего чтения: следующим 
@@ -341,7 +339,7 @@ int Arcoder::decode_symbol()
 }
 
 // @brief декодирование информации
-void Arcoder::decode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
+void Arcoder::decode(int8_t* in, int8_t* out, int size_in, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -392,7 +390,7 @@ void Arcoder::decodeSubband(SubbandRect rect)
 }
 
 // @brief декодирование информации в нелинейном порядке
-void Arcoder::mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
+void Arcoder::mappedDecode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;

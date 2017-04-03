@@ -43,16 +43,16 @@ public:
 		m_q = findQ(min, max);
 	}
 
-	uint8_t* quantArray(double* input, int size);
+	int8_t* quantArray(double* input, int size);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	void deQuantArray(uint8_t* input, double* output, int size);
+	void deQuantArray(int8_t* input, double* output, int size);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	uint8_t* myQuantArray(qPair q, double* input, int size);
+	int8_t* myQuantArray(qPair q, double* input, int size);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	void myDeQuantArray(qPair q, uint8_t* input, double* output, int size);
+	void myDeQuantArray(qPair q, int8_t* input, double* output, int size);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	void findMinMax(double* input, int size, double &min, double &max);

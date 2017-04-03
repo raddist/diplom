@@ -19,7 +19,7 @@ public:
 
 	void reset_model();
 
-	double calcP(int index, uint8_t* decoded_data);
+	double calcP(int index, int8_t* decoded_data);
 
 	int findModelByP(double p);
 
@@ -30,7 +30,7 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// @brief кодирование информации
-	void encode(uint8_t* in, uint8_t* out, SubbandMap map, int size_in, int &size_out);
+	void encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out);
 
 	//
 	void encodeSubband(SubbandRect rect);
@@ -50,7 +50,7 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// @brief декодирование информации
-	void decode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
+	void decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
 
 	//
 	void decodeSubband(SubbandRect rect);
