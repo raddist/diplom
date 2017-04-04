@@ -11,11 +11,16 @@ struct Context3x3 {
 	double* maskH;
 };
 
+typedef std::vector<double> Limits;
+
 class ContextArcoder : public Arcoder
 {
 public:
+	ContextArcoder();
 
 	ContextArcoder(Context3x3 i_context);
+
+	ContextArcoder(Context3x3 i_context, Limits i_limits);
 
 	void reset_model();
 
@@ -66,6 +71,6 @@ public:
 
 private:
 	Context3x3 m_context;
-	std::vector<double> limits;
+	Limits limits;
 	int m_subbandType;
 };

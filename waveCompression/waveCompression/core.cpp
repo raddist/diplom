@@ -184,7 +184,14 @@ int test3(char **argv)
 	context.maskD = ctemp;
 	context.maskH = ctemp1;
 	context.maskV = ctemp1;
-	ContextArcoder Carcoder(context);
+
+	// create limits
+	Limits limits;
+	limits.push_back(atof(argv[4]));
+	limits.push_back(atof(argv[5]));
+	limits.push_back(atof(argv[6]));
+
+	ContextArcoder Carcoder(context, limits);
 	int8_t* c_encoded = new int8_t[img_size];
 	int c_out_size = 0;
 	Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
@@ -214,7 +221,7 @@ int test3(char **argv)
 	delete[] c_decoded;
 	delete[] input;
 	delete[] output;
-	return 0;
+	return c_out_size;
 }
 
 void _cdecl main(int argc, char **argv)

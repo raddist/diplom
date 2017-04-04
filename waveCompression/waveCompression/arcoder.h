@@ -14,8 +14,10 @@
 #define THIRD_QTR					(3*FIRST_QTR)								// 1100...0
 #define MAX_FREQUENCY				((unsigned)1<<15)
 #define NO_OF_CHARS					256
-#define EOF_SYMBOL					NO_OF_CHARS			// char-коды: 0..NO_OF_CHARS-1 
+#define EOF_SYMBOL					128		// char-коды: 0..NO_OF_CHARS-1 
 #define NO_OF_SYMBOLS				(NO_OF_CHARS+1)		// + EOF_SYMBOL
+// for int8_t to uint8_t transformation
+#define NEGATIVE_SHIFT				128
 
 class SubbandMap
 {
@@ -141,7 +143,7 @@ protected:
 	int8_t *data_in, *data_out;
 	int sizeOut, sizeIn = 0;
 	int imgWidth, imgHeight;
-	int m_currentModel;				//< model to encode/decode next symbol
+	unsigned int m_currentModel;				//< model to encode/decode next symbol
 	bool m_isOneModel;				//< if true
 
 	unsigned int						cum_freq[NO_OF_SYMBOLS][NO_OF_SYMBOLS + 1];	//интервалы частот символов

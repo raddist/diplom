@@ -1,3 +1,6 @@
-﻿  core.cpp
-  LINK : отсутствует база данных C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\waveCompression.pdb программы; выполняется полная компоновка
+﻿  arcoder.cpp
+  Создание кода...
+  Пропуск... (изменения не обнаружены)
+  core.cpp
+  contextArcoder.cpp
   waveCompression.vcxproj -> C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\waveCompression.exe

@@ -6,6 +6,10 @@
 
 #pragma warning(disable: 4996)
 
+ContextArcoder::ContextArcoder()
+{
+}
+
 ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	m_context(i_context),
 	m_subbandType(0)
@@ -13,6 +17,16 @@ ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	limits.push_back(0.1);
 	limits.push_back(1);
 	limits.push_back(2);
+
+	m_isOneModel = false;
+}
+
+ContextArcoder::ContextArcoder(Context3x3 i_context,
+							   Limits i_limits) :
+	m_context(i_context),
+	m_subbandType(0)
+{
+	limits = i_limits;
 
 	m_isOneModel = false;
 }
@@ -35,11 +49,11 @@ double ContextArcoder::calcP(int index, int8_t *decoded_data)
 			int temp_index = index + (-1 + j)*imgWidth + (-1 + i);
 			switch (m_subbandType)
 			{
-			case 1: sum += m_context.maskV[3 * j + i] * decoded_data[temp_index];
+			case 1: sum += m_context.maskV[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
-			case 2: sum += m_context.maskH[3 * j + i] * decoded_data[temp_index];
+			case 2: sum += m_context.maskH[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
-			case 3: sum += m_context.maskD[3 * j + i] * decoded_data[temp_index];
+			case 3: sum += m_context.maskD[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
 			}
 		}
@@ -125,6 +139,7 @@ void ContextArcoder::encode(int8_t* in, int8_t* out, SubbandMap map, int size_in
 	size_out = sizeOut;
 	sizeIn = 0;
 	sizeOut = 0;
+	m_subbandType = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -156,7 +171,7 @@ void ContextArcoder::encodeTopRow(int startIndex, int endIndex)
 {
 	for (int i = startIndex; i < endIndex; ++i)
 	{
-		uint8_t symbol = data_in[i];
+		int8_t symbol = data_in[i];
 
 		encode_symbol(symbol);
 		update_model(symbol);
@@ -169,7 +184,7 @@ void ContextArcoder::encodeLeftColumn(int startIndex, int endIndex)
 	for (int j = startIndex; j < endIndex; ++j)
 	{
 		int index = j*imgWidth;
-		uint8_t symbol = data_in[index];
+		int8_t symbol = data_in[index];
 
 		encode_symbol(symbol);
 		update_model(symbol);
@@ -179,7 +194,7 @@ void ContextArcoder::encodeLeftColumn(int startIndex, int endIndex)
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::encodeTopLeftSubbandSymbol(int index)
 {
-	uint8_t symbol = data_in[index];
+	int8_t symbol = data_in[index];
 
 	encode_symbol(symbol);
 	update_model(symbol);
@@ -191,7 +206,7 @@ void ContextArcoder::encodeSymbolByContext(int index)
 	double p = calcP(index, data_in);
 	m_currentModel = findModelByP(p);
 
-	uint8_t symbol = data_in[index];
+	int8_t symbol = data_in[index];
 	encode_symbol(symbol);
 
 
@@ -260,6 +275,7 @@ void ContextArcoder::decode(int8_t* in, int8_t* out, SubbandMap map, int &size_o
 	size_out = sizeOut;
 	sizeIn = 0;
 	sizeOut = 0;
+	m_subbandType = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////

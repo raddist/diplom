@@ -45,13 +45,13 @@ inline void Arcoder::update_model(int symbol)
 		cum_freq[m_currentModel][NO_OF_SYMBOLS] = cum;
 	}
 	// обновление интервалов частот
-	for (int i = symbol + 1; i <= NO_OF_SYMBOLS; i++) cum_freq[m_currentModel][i]++;
+	for (int i = NEGATIVE_SHIFT + symbol + 1; i <= NO_OF_SYMBOLS; i++) cum_freq[m_currentModel][i]++;
 
 	// update previous symbol
 
 	if (!m_isOneModel)
 	{
-		m_currentModel = symbol;
+		m_currentModel = NEGATIVE_SHIFT + symbol;
 	}
 }
 
@@ -115,8 +115,8 @@ void Arcoder::encode_symbol(int symbol)
 	// пересчет границ интервала
 	unsigned long range;
 	range = high - low + 1;
-	high = low + range*cum_freq[m_currentModel][symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
-	low = low + range*cum_freq[m_currentModel][symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
+	high = low + range*cum_freq[m_currentModel][NEGATIVE_SHIFT + symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
+	low = low + range*cum_freq[m_currentModel][NEGATIVE_SHIFT + symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
 	// далее при необходимости - вывод бита или меры от зацикливания
 	for (;;)
 	{			// Замечание: всегда low<high
@@ -186,7 +186,7 @@ void Arcoder::encodeSubband(SubbandRect rect)
 		for (int i = horizontalFrom; i*(step) <= horizontalTo*(step); i += step)
 		{
 			int index = j*imgWidth + i;
-			uint8_t symbol = data_in[index];
+			int8_t symbol = data_in[index];
 
 			encode_symbol(symbol);
 			update_model(symbol);
@@ -311,10 +311,10 @@ int Arcoder::decode_symbol()
 	// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
 	cum = ((value - low + 1)*cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1) / range;
 	// поиск интервала, соответствующего числу cum
-	for (symbol = 0; cum_freq[m_currentModel][symbol + 1] <= cum; symbol++);
+	for (symbol = -128; cum_freq[m_currentModel][NEGATIVE_SHIFT + symbol + 1] <= cum; symbol++);
 	// пересчет границ
-	high = low + range*cum_freq[m_currentModel][symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
-	low = low + range*cum_freq[m_currentModel][symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
+	high = low + range*cum_freq[m_currentModel][NEGATIVE_SHIFT + symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
+	low = low + range*cum_freq[m_currentModel][NEGATIVE_SHIFT + symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
 	for (;;)
 	{		// подготовка к декодированию следующих символов
 		if (high<HALF) {/* Старшие биты low и high - нулевые */ }
