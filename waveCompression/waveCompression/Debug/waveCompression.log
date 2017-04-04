@@ -1,2 +1,8 @@
 ﻿  core.cpp
+  contextArcoder.cpp
+  Создание кода...
+wavelet.obj : warning LNK4099: "vc140.pdb" PDB эх эрщфхэ ё "wavelet.obj" шыш эр "C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\vc140.pdb"; ъюьяюэютър юс·хъЄр т√яюыэ хЄё  ъръ яЁш юЄёєЄёЄтшш юЄырфюўэ√ї фрээ√ї
+global.obj : warning LNK4099: "vc140.pdb" PDB эх эрщфхэ ё "global.obj" шыш эр "C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\vc140.pdb"; ъюьяюэютър юс·хъЄр т√яюыэ хЄё  ъръ яЁш юЄёєЄёЄтшш юЄырфюўэ√ї фрээ√ї
+filter.obj : warning LNK4099: "vc140.pdb" PDB эх эрщфхэ ё "filter.obj" шыш эр "C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\vc140.pdb"; ъюьяюэютър юс·хъЄр т√яюыэ хЄё  ъръ яЁш юЄёєЄёЄтшш юЄырфюўэ√ї фрээ√ї
+bmpStream.obj : warning LNK4099: "vc140.pdb" PDB эх эрщфхэ ё "bmpStream.obj" шыш эр "C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\vc140.pdb"; ъюьяюэютър юс·хъЄр т√яюыэ хЄё  ъръ яЁш юЄёєЄёЄтшш юЄырфюўэ√ї фрээ√ї
   waveCompression.vcxproj -> C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\waveCompression.exe

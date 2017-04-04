@@ -158,6 +158,72 @@ void qSchedule(double i_qConst)
 	img.WriteBmp(out);
 }
 
+/////////////////////////////////////////////////////////////////////////////
+int test3(char **argv)
+{
+	BmpImage img(in, 1);
+	int img_size = img.GetHeight() * img.GetHeight();
+
+	Real* input = static_cast<Real*>(img.GetDoubleData());
+	Real *output = new Real[img_size];
+
+	//using wavelet
+	Wavelet wvlt(&Antonini);
+	wvlt.transform2d(input, output, 512, 512, 4);
+
+	// quant
+	Quantor quant(static_cast<double*>(output), img_size);
+	uint8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
+
+
+	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
+	// context encode
+	double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	double ctemp1[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	Context3x3 context;
+	context.maskD = ctemp;
+	context.maskH = ctemp1;
+	context.maskV = ctemp1;
+	//
+	Limits limits;
+	limits.push_back(atof(argv[4]));
+	limits.push_back(atof(argv[5]));
+	limits.push_back(atof(argv[6]));
+	//
+	ContextArcoder Carcoder(context, limits);
+	uint8_t* c_encoded = new uint8_t[img_size];
+	int c_out_size = 0;
+	Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
+
+	// write encoded data in file
+	FILE* temp = fopen("encoded.bin", "w+b");
+	fwrite(c_encoded, 1, c_out_size, temp);
+	fclose(temp);
+
+	// context decode
+	uint8_t* c_decoded = new uint8_t[img_size];
+	int c_foundedSize = 0;
+	Carcoder.decode(c_encoded, c_decoded, map, c_foundedSize);
+
+	// dequant
+	quant.deQuantArray(c_decoded, output, c_foundedSize);
+
+	// invert
+	wvlt.invert2d(output, input, img.GetWidth(), img.GetHeight(), 4);
+
+	img.SetDataFromDouble(static_cast<double*>(input));
+
+	img.WriteBmp(out);
+
+	delete[] post;
+	delete[] c_encoded;
+	delete[] c_decoded;
+	delete[] input;
+	delete[] output;
+	return 0;
+}
+
+
 void _cdecl main(int argc, char **argv)
 {
 	printf("\nAlpha version of arithmetic Codec 2\n");
@@ -168,8 +234,9 @@ void _cdecl main(int argc, char **argv)
 	else
 	{
 		int a = 0;
-		if (argv[1][0] == 'e') encode();
-		if (argv[1][0] == 'q') qSchedule(atof(argv[4]));
+		if (argv[1][0] == '1') encode();
+		if (argv[1][0] == '2') qSchedule(atof(argv[4]));
+		if (argv[1][0] == '3') test3(argv);
 		fclose(in);
 		fclose(out);
 	}

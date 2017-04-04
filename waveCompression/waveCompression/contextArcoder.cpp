@@ -6,6 +6,14 @@
 
 #pragma warning(disable: 4996)
 
+///////////////////////////////////////////////////////////////////////
+ContextArcoder::ContextArcoder() :
+	m_subbandType(0)
+{
+	m_isOneModel = false;
+}
+
+///////////////////////////////////////////////////////////////////////
 ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	m_context(i_context),
 	m_subbandType(0)
@@ -13,6 +21,17 @@ ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	limits.push_back(0.1);
 	limits.push_back(1);
 	limits.push_back(2);
+
+	m_isOneModel = false;
+}
+
+///////////////////////////////////////////////////////////////////////
+ContextArcoder::ContextArcoder(Context3x3 i_context,
+								Limits i_limits) :
+	m_context(i_context),
+	m_subbandType(0)
+{
+	limits = i_limits;
 
 	m_isOneModel = false;
 }
