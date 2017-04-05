@@ -6,6 +6,31 @@
 
 #pragma warning(disable: 4996)
 
+Model::Model(bool isEOFneeded /*= false*/):
+	m_startValue(0)	
+{
+	m_numOfChars = 256;
+	m_numOfSymbols = m_numOfChars + (isEOFneeded) ? 1 : 0;
+	cum_freq = new unsigned int[m_numOfSymbols + 1];
+}
+
+Model::Model(int i_numOfChars, int i_startValue, bool isEOFneeded /*= false*/):
+	m_startValue(i_startValue)
+{
+	m_numOfChars = i_numOfChars;
+	m_numOfSymbols = m_numOfChars + (isEOFneeded) ? 1 : 0;
+	cum_freq = new unsigned int[m_numOfSymbols + 1];
+}
+
+void Model::StartModel()
+{
+	// исходно все символы в сообщении считаем равновероятными 
+	for (int i = 0; i <= m_numOfSymbols; i++)
+	{
+		cum_freq[i] = i;
+	}
+}
+
 Arcoder::Arcoder()
 {
 }

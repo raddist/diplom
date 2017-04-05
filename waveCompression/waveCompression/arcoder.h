@@ -62,6 +62,31 @@ public:
 	int bot;
 };
 
+class Model
+{
+public:
+
+	// @brief default ctor
+	Model(bool isEOFneeded = false);
+
+	// @brief ctor
+	// @param i_len - [in], capacity of the model
+	// @param i_startValue - [in], start of real input/output model interval
+	Model(int i_numOfChars, int i_startValue, bool isEOFneeded = false);
+
+	// @brief
+	void StartModel();
+
+	//@brief
+	void UpdateModel(int i_symbol);
+
+private:
+	int m_numOfChars;
+	int m_numOfSymbols;
+	int m_startValue;
+	unsigned int *cum_freq;
+};
+
 class Arcoder
 {
 public:
@@ -144,6 +169,7 @@ protected:
 	int m_currentModel;				//< model to encode/decode next symbol
 	bool m_isOneModel;				//< if true
 
+	Model m_model[NO_OF_SYMBOLS];					//< model for encoding/decoding symbols
 	unsigned int						cum_freq[NO_OF_SYMBOLS][NO_OF_SYMBOLS + 1];	//интервалы частот символов
 																					// относительная частота появления символа s (оценка вероятности его появления)
 																					// определяется как p(s)=(cum_freq[s+1]-cum_freq[s])/cum_freq[NO_OF_SYMBOLS]
