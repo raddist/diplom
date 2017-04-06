@@ -6,14 +6,16 @@
 
 #pragma warning(disable: 4996)
 
+/////////////////////////////////////////////////////////////////////////////////
 Model::Model(bool isEOFneeded /*= false*/):
 	m_startValue(0)	
 {
-	m_numOfChars = 256;
-	m_numOfSymbols = m_numOfChars + (isEOFneeded) ? 1 : 0;
+	m_numOfChars = NO_OF_CHARS;
+	m_numOfSymbols = m_numOfChars + (isEOFneeded ? 1 : 0);
 	cum_freq = new unsigned int[m_numOfSymbols + 1];
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 Model::Model(int i_numOfChars, int i_startValue, bool isEOFneeded /*= false*/):
 	m_startValue(i_startValue)
 {
@@ -22,6 +24,7 @@ Model::Model(int i_numOfChars, int i_startValue, bool isEOFneeded /*= false*/):
 	cum_freq = new unsigned int[m_numOfSymbols + 1];
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 void Model::StartModel()
 {
 	// исходно все символы в сообщении считаем равновероятными 
@@ -31,50 +34,87 @@ void Model::StartModel()
 	}
 }
 
-Arcoder::Arcoder()
+/////////////////////////////////////////////////////////////////////////////////
+inline void Model::UpdateModel(int i_symbol)
 {
-}
-
-Arcoder::Arcoder(int i_memoryLen)
-{
-	if (i_memoryLen != 0)
+	if (cum_freq[m_numOfSymbols] == MAX_FREQUENCY)
+	{	//	масштабируем частотные интервалы, уменьшая их в 2 раза
+		int cum = 0;
+		for (int i = 0; i < m_numOfSymbols; i++)
+		{
+			int fr = (cum_freq[i + 1] - cum_freq[i] + 1) >> 1;
+			cum_freq[i] = cum;
+			cum += fr;
+		}
+		cum_freq[m_numOfSymbols] = cum;
+	}
+	// обновление интервалов частот
+	for (int i = i_symbol + 1; i <= m_numOfSymbols; i++)
 	{
-		m_isOneModel = false;
+		cum_freq[i]++;
 	}
 }
 
+/////////////////////////////////////////////////////////////////////////////////
+unsigned int Model::GetFreq(int i_symbol)
+{
+	return cum_freq[i_symbol];
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+unsigned int Model::GetLastFreq()
+{
+	return cum_freq[m_numOfSymbols];
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+void Converter::Initialize(int i_numOfChars /*= 256*/,
+		  int i_startValue /*= -128*/)
+{
+	m_startValue = i_startValue;
+	_ASSERT(i_startValue + i_numOfChars < 256);
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+uint8_t Converter::ConvertToUnsigned(int i_symbol)
+{
+	return static_cast<uint8_t>(i_symbol - m_startValue);
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+int8_t Converter::ConvertToSigned(uint8_t i_symbol)
+{
+	return static_cast<int8_t>(i_symbol - m_startValue);
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+Arcoder::Arcoder(int i_memoryLen /*= 0*/)
+{
+	m_numOfModelsNeeded = (i_memoryLen == 0) ? 1 : i_memoryLen * NO_OF_SYMBOLS;
+	m_model = new Model[m_numOfModelsNeeded];
+
+	conv.Initialize();
+}
+
+/////////////////////////////////////////////////////////////////////////////////
 // @brief инициализация массива частот
 void Arcoder::start_model(void)
 {
-	for (int k = 0; k < NO_OF_CHARS; ++k)
+	for (int k = 0; k < m_numOfModelsNeeded; ++k)
 	{
-		// исходно все символы в сообщении считаем равновероятными 
-		for (int i = 0; i <= NO_OF_SYMBOLS; i++)	cum_freq[k][i] = i;
+		m_model[k].StartModel();
 	}
 	m_currentModel = 0;
 }
 
-// @brief обновление массива частот
-// @param symbol - in, поступивший символ
+/////////////////////////////////////////////////////////////////////////////////
 inline void Arcoder::update_model(int symbol)
 {
-	if (cum_freq[m_currentModel][NO_OF_SYMBOLS] == MAX_FREQUENCY)
-	{	//	масштабируем частотные интервалы, уменьшая их в 2 раза
-		int cum = 0;
-		for (int i = 0; i < NO_OF_SYMBOLS; i++)
-		{
-			int fr = (cum_freq[m_currentModel][i + 1] - cum_freq[m_currentModel][i] + 1) >> 1;
-			cum_freq[m_currentModel][i] = cum;
-			cum += fr;
-		}
-		cum_freq[m_currentModel][NO_OF_SYMBOLS] = cum;
-	}
-	// обновление интервалов частот
-	for (int i = symbol + 1; i <= NO_OF_SYMBOLS; i++) cum_freq[m_currentModel][i]++;
+	m_model[m_currentModel].UpdateModel(symbol);
 
 	// update previous symbol
 
-	if (!m_isOneModel)
+	if (m_numOfModelsNeeded != 1)
 	{
 		m_currentModel = symbol;
 	}
@@ -97,7 +137,7 @@ void Arcoder::start_encoding(void)
 	m_currentModel = 0;
 }
 
-// @brief вывод одного бита в сжатый файл
+/////////////////////////////////////////////////////////////////////////////////
 inline void Arcoder::output_bit(int bit)
 {
 	buffer = (buffer >> 1) + (bit << 7);	// в битовый буфер (один байт)
@@ -112,7 +152,7 @@ inline void Arcoder::output_bit(int bit)
 	}
 }
 
-// @brief вывод одного очередного бита и тех, которые были отложены
+/////////////////////////////////////////////////////////////////////////////////
 inline void Arcoder::output_bit_plus_follow(int bit)
 {
 	output_bit(bit);
@@ -123,7 +163,7 @@ inline void Arcoder::output_bit_plus_follow(int bit)
 	}
 }
 
-// @brief завершение кодирования
+/////////////////////////////////////////////////////////////////////////////////
 void Arcoder::done_encoding(void)
 {
 	bits_to_follow++;
@@ -133,15 +173,14 @@ void Arcoder::done_encoding(void)
 	sizeOut++;
 }
 
-// @brief кодирование символа
-// @param symbol - in, поступивший символ
+/////////////////////////////////////////////////////////////////////////////////
 void Arcoder::encode_symbol(int symbol)
 {
 	// пересчет границ интервала
 	unsigned long range;
 	range = high - low + 1;
-	high = low + range*cum_freq[m_currentModel][symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
-	low = low + range*cum_freq[m_currentModel][symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
+	high = low + range * m_model[m_currentModel].GetFreq(symbol + 1) / m_model[m_currentModel].GetLastFreq() - 1;
+	low = low + range * m_model[m_currentModel].GetFreq(symbol) / m_model[m_currentModel].GetLastFreq();
 	// далее при необходимости - вывод бита или меры от зацикливания
 	for (;;)
 	{			// Замечание: всегда low<high
@@ -170,13 +209,12 @@ void Arcoder::encode_symbol(int symbol)
 	}
 }
 
-// @brief кодирование информации
-void Arcoder::encode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
+/////////////////////////////////////////////////////////////////////////////////
+void Arcoder::encode(int8_t* in, int8_t* out, int size_in, int &size_out)
 {
 	data_in = in;
 	data_out = out;
 
-	uint8_t symbol;
 	start_model();
 	start_encoding();
 
@@ -185,9 +223,9 @@ void Arcoder::encode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 	// read data
 	for (int i = 0; i < size_in; ++i)
 	{
-		symbol = data_in[i];
-		encode_symbol(symbol);
-		update_model(symbol);
+		uint8_t uSymbol= conv.ConvertToUnsigned(data_in[i]);
+		encode_symbol(uSymbol);
+		update_model(uSymbol);
 	}
 
 	encode_symbol(EOF_SYMBOL);
@@ -198,7 +236,7 @@ void Arcoder::encode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 	sizeOut = 0;
 }
 
-//
+/////////////////////////////////////////////////////////////////////////////////
 void Arcoder::encodeSubband(SubbandRect rect)
 {
 	int horizontalFrom = rect.left;
@@ -211,10 +249,11 @@ void Arcoder::encodeSubband(SubbandRect rect)
 		for (int i = horizontalFrom; i*(step) <= horizontalTo*(step); i += step)
 		{
 			int index = j*imgWidth + i;
-			uint8_t symbol = data_in[index];
 
-			encode_symbol(symbol);
-			update_model(symbol);
+			uint8_t uSymbol = conv.ConvertToUnsigned(data_in[index]);
+
+			encode_symbol(uSymbol);
+			update_model(uSymbol);
 		}
 
 		// change direction
@@ -225,8 +264,8 @@ void Arcoder::encodeSubband(SubbandRect rect)
 	}
 }
 
-// @brief кодирование информации в нелинейном порядке
-void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
+/////////////////////////////////////////////////////////////////////////////////
+void Arcoder::mappedEncode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -280,16 +319,13 @@ void Arcoder::mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_
 /////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// @brief ввод 1 бита из сжатого файла
 inline int Arcoder::input_bit(void)
 {
 	if (bits_to_go == 0)
 	{
 		buffer = *data_in;	// заполняем буфер битового ввода
-		uint8_t temp = data_in[7212 - 1];
 		data_in++;
 		sizeIn++;
-		temp = data_in[7212 - 1 - sizeIn];
 		if (buffer == EOF)	// входной поток сжатых данных исчерпан !!!
 		{
 			// Причина попытки дальнейшего чтения: следующим 
@@ -315,7 +351,7 @@ inline int Arcoder::input_bit(void)
 	return t;
 }
 
-// @brief инициализация глобальных переменных
+/////////////////////////////////////////////////////////////////////////////////
 void Arcoder::start_decoding(void)
 {
 	bits_to_go = 0;				// свободно бит в битовом буфере ввода
@@ -328,7 +364,7 @@ void Arcoder::start_decoding(void)
 	m_currentModel = 0;
 }
 
-// @brief декодирование символа
+/////////////////////////////////////////////////////////////////////////////////
 int Arcoder::decode_symbol()
 {
 	unsigned long range, cum;
@@ -336,12 +372,12 @@ int Arcoder::decode_symbol()
 	range = high - low + 1;
 	// число cum - это число value, пересчитанное из интервала
 	// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
-	cum = ((value - low + 1)*cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1) / range;
+	cum = ((value - low + 1)*m_model[m_currentModel].GetLastFreq() - 1) / range;
 	// поиск интервала, соответствующего числу cum
-	for (symbol = 0; cum_freq[m_currentModel][symbol + 1] <= cum; symbol++);
+	for (symbol = 0; m_model[m_currentModel].GetFreq(symbol + 1) <= cum; symbol++);
 	// пересчет границ
-	high = low + range*cum_freq[m_currentModel][symbol + 1] / cum_freq[m_currentModel][NO_OF_SYMBOLS] - 1;
-	low = low + range*cum_freq[m_currentModel][symbol] / cum_freq[m_currentModel][NO_OF_SYMBOLS];
+	high = low + range*m_model[m_currentModel].GetFreq(symbol + 1) / m_model[m_currentModel].GetLastFreq() - 1;
+	low = low + range*m_model[m_currentModel].GetFreq(symbol) / m_model[m_currentModel].GetLastFreq();
 	for (;;)
 	{		// подготовка к декодированию следующих символов
 		if (high<HALF) {/* Старшие биты low и high - нулевые */ }
@@ -365,19 +401,21 @@ int Arcoder::decode_symbol()
 	return symbol;
 }
 
-// @brief декодирование информации
-void Arcoder::decode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
+/////////////////////////////////////////////////////////////////////////////////
+void Arcoder::decode(int8_t* in, int8_t* out, int size_in, int &size_out)
 {
 	data_in = in;
 	data_out = out;
 
-	int symbol;
+	int uSymbol;
 	start_model();
 	start_decoding();
 
-	while ((symbol = decode_symbol()) != EOF_SYMBOL)
+	while ((uSymbol = decode_symbol()) != EOF_SYMBOL)
 	{
-		update_model(symbol);
+		update_model(uSymbol);
+
+		int8_t symbol = conv.ConvertToSigned(uSymbol);
 		*data_out = symbol;
 		data_out++;
 		sizeOut++;
@@ -388,7 +426,7 @@ void Arcoder::decode(uint8_t* in, uint8_t* out, int size_in, int &size_out)
 	sizeOut = 0;
 }
 
-// 
+/////////////////////////////////////////////////////////////////////////////////
 void Arcoder::decodeSubband(SubbandRect rect)
 {
 	int horizontalFrom = rect.left;
@@ -401,9 +439,10 @@ void Arcoder::decodeSubband(SubbandRect rect)
 		for (int i = horizontalFrom; i*(step) <= horizontalTo*(step); i += step)
 		{
 			int index = j*imgWidth + i;
+			int uSymbol = decode_symbol();
+			update_model(uSymbol);
 
-			int symbol = decode_symbol();
-			update_model(symbol);
+			int8_t symbol = conv.ConvertToSigned(uSymbol);
 			data_out[index] = symbol;
 			sizeOut++;
 		}
@@ -416,8 +455,8 @@ void Arcoder::decodeSubband(SubbandRect rect)
 	}
 }
 
-// @brief декодирование информации в нелинейном порядке
-void Arcoder::mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
+/////////////////////////////////////////////////////////////////////////////////
+void Arcoder::mappedDecode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;

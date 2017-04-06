@@ -17,6 +17,7 @@
 #define EOF_SYMBOL					NO_OF_CHARS			// char-коды: 0..NO_OF_CHARS-1 
 #define NO_OF_SYMBOLS				(NO_OF_CHARS+1)		// + EOF_SYMBOL
 
+/////////////////////////////////////////////////////////////////////////////////////////
 class SubbandMap
 {
 public:
@@ -45,6 +46,7 @@ public:
 	int steps;
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////
 class SubbandRect
 {
 public:
@@ -62,12 +64,13 @@ public:
 	int bot;
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////
 class Model
 {
 public:
 
 	// @brief default ctor
-	Model(bool isEOFneeded = false);
+	Model(bool isEOFneeded = true);
 
 	// @brief ctor
 	// @param i_len - [in], capacity of the model
@@ -77,8 +80,13 @@ public:
 	// @brief
 	void StartModel();
 
-	//@brief
 	void UpdateModel(int i_symbol);
+
+	// @brief
+	unsigned int GetFreq(int i_symbol);
+
+	// @brief
+	unsigned int GetLastFreq();
 
 private:
 	int m_numOfChars;
@@ -87,14 +95,36 @@ private:
 	unsigned int *cum_freq;
 };
 
-class Arcoder
+/////////////////////////////////////////////////////////////////////////////////////////
+class Converter
 {
 public:
 
-	Arcoder();
+	Converter() {};
 
+	void Initialize(int i_numOfChars = 256,
+			   int i_startValue = -128);
+	//@brief
+	// note: all the model functions which gets i_symbol as input
+	//       must convert it 
+	//		 from	[m_startValue .. m_startValue + m_numOfChars - 1]
+	//		 to		[0 .. m_numOfChars - 1]
+	//		 -1 because of zero is counts as char too
+	uint8_t ConvertToUnsigned(int i_symbol);
+
+	// @brief
+	int8_t ConvertToSigned(uint8_t i_symbol);
+
+private:
+	int m_startValue;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+class Arcoder
+{
+public:
 	// memory arcoder ctor
-	Arcoder(int i_memoryLen);
+	Arcoder(int i_memoryLen = 0);
 
 	// @brief инициализаци€ массива частот
 	virtual void start_model(void);
@@ -126,13 +156,13 @@ public:
 	virtual void encode_symbol(int symbol);
 
 	// @brief кодирование информации
-	virtual void encode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
+	virtual void encode(int8_t* in, int8_t* out, int size_in, int &size_out);
 
 	//
 	virtual void encodeSubband(SubbandRect rect);
 
 	// @brief кодирование информации в нелинейном пор€дке
-	virtual void mappedEncode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
+	virtual void mappedEncode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -150,27 +180,25 @@ public:
 	virtual int decode_symbol();
 
 	// @brief декодирование информации
-	virtual void decode(uint8_t* in, uint8_t* out, int size_in, int &size_out);
+	virtual void decode(int8_t* in, int8_t* out, int size_in, int &size_out);
 
 	// 
 	virtual void decodeSubband(SubbandRect rect);
 
 	// @brief декодирование информации в нелинейном пор€дке
-	virtual void mappedDecode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out);
+	virtual void mappedDecode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
 
 protected:
 	unsigned long						low, high, value;
 	uint8_t								buffer, bits_to_go;
 	int									garbage_bits, bits_to_follow;
 	
-	uint8_t *data_in, *data_out;
+	int8_t *data_in, *data_out;
 	int sizeOut, sizeIn = 0;
 	int imgWidth, imgHeight;
 	int m_currentModel;				//< model to encode/decode next symbol
-	bool m_isOneModel;				//< if true
 
-	Model m_model[NO_OF_SYMBOLS];					//< model for encoding/decoding symbols
-	unsigned int						cum_freq[NO_OF_SYMBOLS][NO_OF_SYMBOLS + 1];	//интервалы частот символов
-																					// относительна€ частота по€влени€ символа s (оценка веро€тности его по€влени€)
-																					// определ€етс€ как p(s)=(cum_freq[s+1]-cum_freq[s])/cum_freq[NO_OF_SYMBOLS]
+	Model *m_model;					//< array of models for encoding/decoding symbols
+	int m_numOfModelsNeeded;
+	Converter conv;
 };

@@ -10,7 +10,6 @@
 ContextArcoder::ContextArcoder() :
 	m_subbandType(0)
 {
-	m_isOneModel = false;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -22,7 +21,9 @@ ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	limits.push_back(1);
 	limits.push_back(2);
 
-	m_isOneModel = false;
+	m_numOfModelsNeeded = NO_OF_CHARS;
+	m_model = new Model[m_numOfModelsNeeded];
+	conv.Initialize();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -33,7 +34,9 @@ ContextArcoder::ContextArcoder(Context3x3 i_context,
 {
 	limits = i_limits;
 
-	m_isOneModel = false;
+	m_numOfModelsNeeded = NO_OF_CHARS;
+	m_model = new Model[m_numOfModelsNeeded];
+	conv.Initialize();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -44,21 +47,22 @@ void ContextArcoder::reset_model(void)
 }
 
 ///////////////////////////////////////////////////////////////////////
-double ContextArcoder::calcP(int index, uint8_t *decoded_data)
+double ContextArcoder::calcP(int index, int8_t *decoded_data, bool i_isOnTheBord)
 {
 	double sum = 0;
-	for (int j = 0; j < 3; ++j)
+	int lim = i_isOnTheBord ? 2 : 3;
+	for (int j = 0; j < lim; ++j)
 	{
-		for (int i = 0; i < 3; ++i)
+		for (int i = 0; i < lim; ++i)
 		{
 			int temp_index = index + (-1 + j)*imgWidth + (-1 + i);
 			switch (m_subbandType)
 			{
-			case 1: sum += m_context.maskV[3 * j + i] * decoded_data[temp_index];
+			case 1: sum += m_context.maskV[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
-			case 2: sum += m_context.maskH[3 * j + i] * decoded_data[temp_index];
+			case 2: sum += m_context.maskH[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
-			case 3: sum += m_context.maskD[3 * j + i] * decoded_data[temp_index];
+			case 3: sum += m_context.maskD[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
 			}
 		}
@@ -86,7 +90,7 @@ int ContextArcoder::findModelByP(double p)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encode(uint8_t* in, uint8_t* out, SubbandMap map, int size_in, int &size_out)
+void ContextArcoder::encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -141,6 +145,7 @@ void ContextArcoder::encode(uint8_t* in, uint8_t* out, SubbandMap map, int size_
 	encode_symbol(EOF_SYMBOL);
 	done_encoding();
 
+	m_subbandType = 0;
 	size_out = sizeOut;
 	sizeIn = 0;
 	sizeOut = 0;
@@ -164,7 +169,14 @@ void ContextArcoder::encodeSubband(SubbandRect rect)
 			}
 			else if (j != 0 && i != 0)
 			{
-				encodeSymbolByContext(index);
+				if (j != rect.bot-1 && i != horizontalTo)
+				{
+					encodeSymbolByContext(index);
+				}
+				else
+				{
+					encodeSymbolByContext(index, true);
+				}
 			}
 		}
 	}
@@ -175,10 +187,11 @@ void ContextArcoder::encodeTopRow(int startIndex, int endIndex)
 {
 	for (int i = startIndex; i < endIndex; ++i)
 	{
-		uint8_t symbol = data_in[i];
+		int8_t symbol = data_in[i];
 
-		encode_symbol(symbol);
-		update_model(symbol);
+		uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+		encode_symbol(uSymbol);
+		update_model(uSymbol);
 	}
 }
 
@@ -188,33 +201,36 @@ void ContextArcoder::encodeLeftColumn(int startIndex, int endIndex)
 	for (int j = startIndex; j < endIndex; ++j)
 	{
 		int index = j*imgWidth;
-		uint8_t symbol = data_in[index];
+		int8_t symbol = data_in[index];
 
-		encode_symbol(symbol);
-		update_model(symbol);
+		uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+		encode_symbol(uSymbol);
+		update_model(uSymbol);
 	}
 }
 
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::encodeTopLeftSubbandSymbol(int index)
 {
-	uint8_t symbol = data_in[index];
+	int8_t symbol = data_in[index];
 
-	encode_symbol(symbol);
-	update_model(symbol);
+	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+	encode_symbol(uSymbol);
+	update_model(uSymbol);
 }
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encodeSymbolByContext(int index)
+void ContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
 {
-	double p = calcP(index, data_in);
+	double p = calcP(index, data_in, i_isOnTheBord);
 	m_currentModel = findModelByP(p);
 
-	uint8_t symbol = data_in[index];
-	encode_symbol(symbol);
+	int8_t symbol = data_in[index];
+	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+	encode_symbol(uSymbol);
 
 
-	update_model(symbol);
+	update_model(uSymbol);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -224,7 +240,7 @@ void ContextArcoder::encodeSymbolByContext(int index)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decode(uint8_t* in, uint8_t* out, SubbandMap map, int &size_out)
+void ContextArcoder::decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
 {
 	data_in = in;
 	data_out = out;
@@ -259,7 +275,6 @@ void ContextArcoder::decode(uint8_t* in, uint8_t* out, SubbandMap map, int &size
 		SubbandRect rightTop(hLeftIndex, hRightIndex, 0, vTopIndex);
 		decodeSubband(rightTop);
 
-
 		//left bot
 		m_subbandType = 2;
 		SubbandRect leftBot(0, hLeftIndex, vTopIndex, vBotIndex);
@@ -276,6 +291,7 @@ void ContextArcoder::decode(uint8_t* in, uint8_t* out, SubbandMap map, int &size
 		vBotIndex = map.m_vSize[(k + 2) % 5];
 	}
 
+	m_subbandType = 0;
 	size_out = sizeOut;
 	sizeIn = 0;
 	sizeOut = 0;
@@ -299,7 +315,14 @@ void ContextArcoder::decodeSubband(SubbandRect rect)
 			}
 			else if (j != 0 && i != 0)
 			{
-				decodeSymbolByContext(index);
+				if (j != rect.bot - 1 && i != horizontalTo)
+				{
+					decodeSymbolByContext(index);
+				}
+				else
+				{
+					decodeSymbolByContext(index, true);
+				}
 			}
 		}
 	}
@@ -310,9 +333,12 @@ void ContextArcoder::decodeTopRow(int startIndex, int endIndex)
 {
 	for (int i = startIndex; i < endIndex; ++i)
 	{
-		int symbol = decode_symbol();
-		update_model(symbol);
+		int uSymbol = decode_symbol();
+		update_model(uSymbol);
+
+		int8_t symbol = conv.ConvertToSigned(uSymbol);
 		data_out[i] = symbol;
+
 		sizeOut++;
 	}
 }
@@ -323,8 +349,10 @@ void ContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
 	for (int j = startIndex; j < endIndex; ++j)
 	{
 		int index = j*imgWidth;
-		int symbol = decode_symbol();
-		update_model(symbol);
+		int uSymbol = decode_symbol();
+		update_model(uSymbol);
+
+		int8_t symbol = conv.ConvertToSigned(uSymbol);
 		data_out[index] = symbol;
 		sizeOut++;
 	}
@@ -333,20 +361,24 @@ void ContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::decodeTopLeftSubbandSymbol(int index)
 {
-	int symbol = decode_symbol();
-	update_model(symbol);
+	int uSymbol = decode_symbol();
+	update_model(uSymbol);
+
+	int8_t symbol = conv.ConvertToSigned(uSymbol);
 	data_out[index] = symbol;
 	sizeOut++;
 }
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decodeSymbolByContext(int index)
+void ContextArcoder::decodeSymbolByContext(int index, bool i_isOnTheBord)
 {
-	double p = calcP(index, data_out);
+	double p = calcP(index, data_out, i_isOnTheBord);
 	m_currentModel = findModelByP(p);
 
-	int symbol = decode_symbol();
-	update_model(symbol);
+	int uSymbol = decode_symbol();
+	update_model(uSymbol);
+
+	int8_t symbol = conv.ConvertToSigned(uSymbol);
 	data_out[index] = symbol;
 	sizeOut++;
 }

@@ -28,17 +28,17 @@ void encode()
 	// quant
 	Quantor quant(static_cast<double*>(output), img_size);
 
-	uint8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
+	int8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
 
 	// encode
-	uint8_t* encoded = new uint8_t[img_size];
+	int8_t* encoded = new int8_t[img_size];
 	int out_size = 0;
 	Arcoder coder;
 	Arcoder Mcoder(1);
 	coder.encode(post, encoded, img_size, out_size);
 
 	// mapped encode
-	uint8_t* m_encoded = new uint8_t[img_size];
+	int8_t* m_encoded = new int8_t[img_size];
 	int m_out_size = 0;
 	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 	Mcoder.mappedEncode(post, m_encoded, map, m_out_size);
@@ -51,7 +51,7 @@ void encode()
 	context.maskH = ctemp1;
 	context.maskV = ctemp1;
 	ContextArcoder Carcoder(context);
-	uint8_t* c_encoded = new uint8_t[img_size];
+	int8_t* c_encoded = new int8_t[img_size];
 	int c_out_size = 0;
 	Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
 
@@ -66,17 +66,17 @@ void encode()
 	fclose(m_temp);
 
 	// decode
-	uint8_t* decoded = new uint8_t[img_size];
+	int8_t* decoded = new int8_t[img_size];
 	int foundedSize = 0;
 	coder.decode(encoded, decoded, out_size, foundedSize);
 
 	// decode
-	uint8_t* m_decoded = new uint8_t[img_size];
+	int8_t* m_decoded = new int8_t[img_size];
 	int m_foundedSize = 0;
 	Mcoder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
 
 	// context decode
-	uint8_t* c_decoded = new uint8_t[img_size];
+	int8_t* c_decoded = new int8_t[img_size];
 	int c_foundedSize = 0;
 	Carcoder.decode(c_encoded, c_decoded, map, c_foundedSize);
 
@@ -114,17 +114,17 @@ void qSchedule(double i_qConst)
 
 	// quant
 	Quantor quant(i_qConst);
-	uint8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
+	int8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
 
 	// encode
-	uint8_t* encoded = new uint8_t[img_size];
+	int8_t* encoded = new int8_t[img_size];
 	int out_size = 0;
-	Arcoder coder;
+	Arcoder coder(0);
 	Arcoder Mcoder(1);
 	coder.encode(post, encoded, img_size, out_size);
 
 	// mapped encode
-	uint8_t* m_encoded = new uint8_t[img_size];
+	int8_t* m_encoded = new int8_t[img_size];
 	int m_out_size = 0;
 	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 	Mcoder.mappedEncode(post, m_encoded, map, m_out_size);
@@ -140,12 +140,12 @@ void qSchedule(double i_qConst)
 	fclose(m_temp);
 
 	// decode
-	uint8_t* decoded = new uint8_t[img_size];
+	int8_t* decoded = new int8_t[img_size];
 	int foundedSize = 0;
 	coder.decode(encoded, decoded, out_size, foundedSize);
 
 	// mapped decode
-	uint8_t* m_decoded = new uint8_t[img_size];
+	int8_t* m_decoded = new int8_t[img_size];
 	int m_foundedSize = 0;
 	Mcoder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
 
@@ -173,7 +173,7 @@ int test3(char **argv)
 
 	// quant
 	Quantor quant(static_cast<double*>(output), img_size);
-	uint8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
+	int8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
 
 
 	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
@@ -191,7 +191,7 @@ int test3(char **argv)
 	limits.push_back(atof(argv[6]));
 	//
 	ContextArcoder Carcoder(context, limits);
-	uint8_t* c_encoded = new uint8_t[img_size];
+	int8_t* c_encoded = new int8_t[img_size];
 	int c_out_size = 0;
 	Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
 
@@ -201,9 +201,17 @@ int test3(char **argv)
 	fclose(temp);
 
 	// context decode
-	uint8_t* c_decoded = new uint8_t[img_size];
+	int8_t* c_decoded = new int8_t[img_size];
 	int c_foundedSize = 0;
 	Carcoder.decode(c_encoded, c_decoded, map, c_foundedSize);
+
+	for (int i = 0; i < img_size; ++i)
+	{
+		if (post[i] != c_decoded[i])
+		{
+			int tempdas = 0;
+		}
+	}
 
 	// dequant
 	quant.deQuantArray(c_decoded, output, c_foundedSize);
@@ -220,7 +228,7 @@ int test3(char **argv)
 	delete[] c_decoded;
 	delete[] input;
 	delete[] output;
-	return 0;
+	return c_foundedSize;
 }
 
 
