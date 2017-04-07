@@ -1,9 +1,23 @@
-function findOpt
+% res = fminsearch(@func, [0.2 1 10]);
+% res = res
+function [xMin min] = findOpt()
+min = 11000;
+xMin = [0 0 0];
 
+for i = 0.1:0.1:10
+    for j = 0.1:0.2:20
+        for k = 0.1:0.3:30
+            res = func([i j k]);
+            if (res < min)
+                min = res
+                xMin = [i j k]
+            end
+            k = k
+        end
+        j=j
+    end
+    i = i
+end
 
-
-command = strcat('waveCompression.exe 3 lena.bmp test4.bmp'...
-        ,32,num2str(0.1),32,num2str(1),32,num2str(5) );
-[q w] = system(command);
-
-d = 10
+min = min
+xMin = xMin

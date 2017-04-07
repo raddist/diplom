@@ -129,6 +129,18 @@ void qSchedule(double i_qConst)
 	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 	Mcoder.mappedEncode(post, m_encoded, map, m_out_size);
 
+	// context encode
+	double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	double ctemp1[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	Context3x3 context;
+	context.maskD = ctemp;
+	context.maskH = ctemp1;
+	context.maskV = ctemp1;
+	ContextArcoder Carcoder(context);
+	int8_t* c_encoded = new int8_t[img_size];
+	int c_out_size = 0;
+	Carcoder.encode(post, c_encoded, map, img_size, c_out_size);
+
 	// write encoded data in file
 	FILE* temp = fopen("encoded.bin", "w+b");
 	fwrite(encoded, 1, out_size, temp);
@@ -139,6 +151,11 @@ void qSchedule(double i_qConst)
 	fwrite(m_encoded, 1, m_out_size, m_temp);
 	fclose(m_temp);
 
+	// write context encoded data in file
+	FILE* c_temp = fopen("con_encoded.bin", "w+b");
+	fwrite(c_encoded, 1, c_out_size, c_temp);
+	fclose(c_temp);
+
 	// decode
 	int8_t* decoded = new int8_t[img_size];
 	int foundedSize = 0;
@@ -148,6 +165,11 @@ void qSchedule(double i_qConst)
 	int8_t* m_decoded = new int8_t[img_size];
 	int m_foundedSize = 0;
 	Mcoder.mappedDecode(m_encoded, m_decoded, map, m_foundedSize);
+
+	// context decode
+	int8_t* c_decoded = new int8_t[img_size];
+	int c_foundedSize = 0;
+	Carcoder.decode(c_encoded, c_decoded, map, c_foundedSize);
 
 	// dequant
 	quant.deQuantArray(m_decoded, output, m_foundedSize);
@@ -228,13 +250,15 @@ int test3(char **argv)
 	delete[] c_decoded;
 	delete[] input;
 	delete[] output;
-	return c_foundedSize;
+
+	printf("\n%d\n", c_out_size);
+
+	return c_out_size;
 }
 
 
 void _cdecl main(int argc, char **argv)
 {
-	printf("\nAlpha version of arithmetic Codec 2\n");
 	if ((in = fopen(argv[2], "r+b")) == NULL)
 		printf("\nIncorrect input file\n");
 	else if ((out = fopen(argv[3], "w+b")) == NULL)

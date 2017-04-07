@@ -17,9 +17,9 @@ ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	m_context(i_context),
 	m_subbandType(0)
 {
-	limits.push_back(0.1);
+	limits.push_back(0.2);
 	limits.push_back(1);
-	limits.push_back(2);
+	limits.push_back(10);
 
 	m_numOfModelsNeeded = NO_OF_CHARS;
 	m_model = new Model[m_numOfModelsNeeded];
