@@ -70,12 +70,12 @@ class Model
 public:
 
 	// @brief default ctor
-	Model(bool isEOFneeded = true);
+	explicit Model(bool isEOFneeded = true);
 
 	// @brief ctor
 	// @param i_len - [in], capacity of the model
 	// @param i_startValue - [in], start of real input/output model interval
-	Model(int i_numOfChars, int i_startValue, bool isEOFneeded = false);
+	explicit Model(int i_numOfChars);
 
 	// @brief
 	void StartModel();
@@ -91,7 +91,6 @@ public:
 private:
 	int m_numOfChars;
 	int m_numOfSymbols;
-	int m_startValue;
 	unsigned int *cum_freq;
 };
 
@@ -123,8 +122,10 @@ private:
 class Arcoder
 {
 public:
+	Arcoder();
+
 	// memory arcoder ctor
-	Arcoder(int i_memoryLen = 0);
+	Arcoder(int i_memoryLen);
 
 	// @brief инициализация массива частот
 	virtual void start_model(void);
@@ -198,7 +199,8 @@ protected:
 	int imgWidth, imgHeight;
 	int m_currentModel;				//< model to encode/decode next symbol
 
-	Model *m_model;					//< array of models for encoding/decoding symbols
+	typedef std::vector<Model> Models;
+	Models m_model;					//< array of models for encoding/decoding symbols
 	int m_numOfModelsNeeded;
 	Converter conv;
 };

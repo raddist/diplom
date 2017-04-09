@@ -7,8 +7,7 @@
 #pragma warning(disable: 4996)
 
 /////////////////////////////////////////////////////////////////////////////////
-Model::Model(bool isEOFneeded /*= false*/):
-	m_startValue(0)	
+Model::Model(bool isEOFneeded /*= true*/)
 {
 	m_numOfChars = NO_OF_CHARS;
 	m_numOfSymbols = m_numOfChars + (isEOFneeded ? 1 : 0);
@@ -16,11 +15,10 @@ Model::Model(bool isEOFneeded /*= false*/):
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-Model::Model(int i_numOfChars, int i_startValue, bool isEOFneeded /*= false*/):
-	m_startValue(i_startValue)
+Model::Model(int i_numOfChars)
 {
 	m_numOfChars = i_numOfChars;
-	m_numOfSymbols = m_numOfChars + (isEOFneeded) ? 1 : 0;
+	m_numOfSymbols = m_numOfChars;
 	cum_freq = new unsigned int[m_numOfSymbols + 1];
 }
 
@@ -88,10 +86,21 @@ int8_t Converter::ConvertToSigned(uint8_t i_symbol)
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-Arcoder::Arcoder(int i_memoryLen /*= 0*/)
+Arcoder::Arcoder():
+	m_numOfModelsNeeded(0)
 {
-	m_numOfModelsNeeded = (i_memoryLen == 0) ? 1 : i_memoryLen * NO_OF_SYMBOLS;
-	m_model = new Model[m_numOfModelsNeeded];
+	conv.Initialize();
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+Arcoder::Arcoder(int i_memoryLen)
+{
+	m_numOfModelsNeeded = (i_memoryLen == 0) ? 1 :i_memoryLen * NO_OF_SYMBOLS;
+
+	for (int i = 0; i < m_numOfModelsNeeded; ++i)
+	{
+		m_model.emplace_back(NO_OF_CHARS);
+	}
 
 	conv.Initialize();
 }

@@ -35,6 +35,10 @@ public:
 	/////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	// @brief кодирование символа
+	// @param symbol - in, поступивший символ
+	virtual void encode_symbol(int symbol);
+
 	// @brief кодирование информации
 	void encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out);
 
@@ -55,6 +59,9 @@ public:
 	/////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	// @brief декодирование символа
+	virtual int decode_symbol();
+
 	// @brief декодирование информации
 	void decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
 
@@ -70,7 +77,7 @@ public:
 	void decodeLeftColumn(int startIndex, int endIndex);
 	
 
-private:
+protected:
 	Context3x3 m_context;
 	Limits limits;
 	int m_subbandType;

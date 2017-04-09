@@ -1,4 +1,21 @@
-﻿  core.cpp
-  contextArcoder.cpp
-  Создание кода...
-  waveCompression.vcxproj -> C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\waveCompression.exe
+﻿Сборка начата 09.04.2017 15:36:12.
+     1>Проект "D:\diplom\diplom\waveCompression\waveCompression\waveCompression.vcxproj" в узле 2 (целевые объекты Build).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt arcoder.cpp
+         arcoder.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\diplom\diplom\waveCompression\Debug\waveCompression.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"D:\diplom\diplom\waveCompression\Debug\waveCompression.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\diplom\diplom\waveCompression\Debug\waveCompression.lib" /MACHINE:X86 Debug\arcoder.obj
+         Debug\bmpStream.obj
+         Debug\contextArcoder.obj
+         Debug\core.obj
+         Debug\filter.obj
+         Debug\global.obj
+         Debug\quantor.obj
+         Debug\signContextArcoder.obj
+         Debug\wavelet.obj
+         waveCompression.vcxproj -> D:\diplom\diplom\waveCompression\Debug\waveCompression.exe
+     1>Сборка проекта "D:\diplom\diplom\waveCompression\waveCompression\waveCompression.vcxproj" завершена (целевые объекты Build).
+
+Сборка успешно завершена.
+
+Затраченное время: 00:00:00.51

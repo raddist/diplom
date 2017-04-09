@@ -151,6 +151,7 @@
     <ClInclude Include="contextArcoder.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="quantor.h" />
+    <ClInclude Include="signContextArcoder.h" />
     <ClInclude Include="wavelet.h" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +162,7 @@
     <ClCompile Include="filter.cpp" />
     <ClCompile Include="global.cpp" />
     <ClCompile Include="quantor.cpp" />
+    <ClCompile Include="signContextArcoder.cpp" />
     <ClCompile Include="wavelet.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

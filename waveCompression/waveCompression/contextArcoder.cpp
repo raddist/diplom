@@ -22,7 +22,11 @@ ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	limits.push_back(10);
 
 	m_numOfModelsNeeded = NO_OF_CHARS;
-	m_model = new Model[m_numOfModelsNeeded];
+
+	for (int i = 0; i < m_numOfModelsNeeded; ++i)
+	{
+		m_model.emplace_back();
+	}
 	conv.Initialize();
 }
 
@@ -35,7 +39,11 @@ ContextArcoder::ContextArcoder(Context3x3 i_context,
 	limits = i_limits;
 
 	m_numOfModelsNeeded = NO_OF_CHARS;
-	m_model = new Model[m_numOfModelsNeeded];
+
+	for (int i = 0; i < m_numOfModelsNeeded; ++i)
+	{
+		m_model.emplace_back();
+	}
 	conv.Initialize();
 }
 
@@ -88,6 +96,13 @@ int ContextArcoder::findModelByP(double p)
 ///// encode
 /////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ContextArcoder::encode_symbol(int symbol)
+{
+	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+	Arcoder::encode_symbol(uSymbol);
+	update_model(uSymbol);
+}
 
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out)
@@ -189,9 +204,7 @@ void ContextArcoder::encodeTopRow(int startIndex, int endIndex)
 	{
 		int8_t symbol = data_in[i];
 
-		uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
-		encode_symbol(uSymbol);
-		update_model(uSymbol);
+		encode_symbol(symbol);
 	}
 }
 
@@ -203,9 +216,7 @@ void ContextArcoder::encodeLeftColumn(int startIndex, int endIndex)
 		int index = j*imgWidth;
 		int8_t symbol = data_in[index];
 
-		uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
-		encode_symbol(uSymbol);
-		update_model(uSymbol);
+		encode_symbol(symbol);
 	}
 }
 
@@ -214,9 +225,7 @@ void ContextArcoder::encodeTopLeftSubbandSymbol(int index)
 {
 	int8_t symbol = data_in[index];
 
-	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
-	encode_symbol(uSymbol);
-	update_model(uSymbol);
+	encode_symbol(symbol);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -224,13 +233,9 @@ void ContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
 {
 	double p = calcP(index, data_in, i_isOnTheBord);
 	m_currentModel = findModelByP(p);
-
 	int8_t symbol = data_in[index];
-	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
-	encode_symbol(uSymbol);
 
-
-	update_model(uSymbol);
+	encode_symbol(symbol);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,6 +243,13 @@ void ContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
 ///// decode
 /////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int ContextArcoder::decode_symbol()
+{
+	int uSymbol = Arcoder::decode_symbol();
+	update_model(uSymbol);
+	return conv.ConvertToSigned(uSymbol);
+}
 
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
@@ -333,12 +345,9 @@ void ContextArcoder::decodeTopRow(int startIndex, int endIndex)
 {
 	for (int i = startIndex; i < endIndex; ++i)
 	{
-		int uSymbol = decode_symbol();
-		update_model(uSymbol);
+		int8_t symbol = decode_symbol();
 
-		int8_t symbol = conv.ConvertToSigned(uSymbol);
 		data_out[i] = symbol;
-
 		sizeOut++;
 	}
 }
@@ -349,10 +358,9 @@ void ContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
 	for (int j = startIndex; j < endIndex; ++j)
 	{
 		int index = j*imgWidth;
-		int uSymbol = decode_symbol();
-		update_model(uSymbol);
 
-		int8_t symbol = conv.ConvertToSigned(uSymbol);
+		int8_t symbol = decode_symbol();
+
 		data_out[index] = symbol;
 		sizeOut++;
 	}
@@ -361,10 +369,8 @@ void ContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::decodeTopLeftSubbandSymbol(int index)
 {
-	int uSymbol = decode_symbol();
-	update_model(uSymbol);
+	int8_t symbol = decode_symbol();
 
-	int8_t symbol = conv.ConvertToSigned(uSymbol);
 	data_out[index] = symbol;
 	sizeOut++;
 }
@@ -375,10 +381,8 @@ void ContextArcoder::decodeSymbolByContext(int index, bool i_isOnTheBord)
 	double p = calcP(index, data_out, i_isOnTheBord);
 	m_currentModel = findModelByP(p);
 
-	int uSymbol = decode_symbol();
-	update_model(uSymbol);
+	int8_t symbol = decode_symbol();
 
-	int8_t symbol = conv.ConvertToSigned(uSymbol);
 	data_out[index] = symbol;
 	sizeOut++;
 }
