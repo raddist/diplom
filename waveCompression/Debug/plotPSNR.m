@@ -68,7 +68,7 @@ for i = 1:N
     fclose(fid); 
     bpp(i,3) = cnt / size(I,1) / size(I,2) * 8;
     
-    % context
+    % sign context
     fid = fopen('s_encoded.bin', 'rb');
     if fid == -1 
          error('File is not opened'); 
@@ -91,10 +91,13 @@ for i = 1:N
     imshow(J);
 end 
 
-plot(bpp(:,1), psnr,'b', bpp(:,2), psnr,'r',bpp(:,3), psnr,'g');
+plot(bpp(:,1), psnr,'b',...
+    bpp(:,2), psnr,'r',...
+    bpp(:,3), psnr,'g',...
+    bpp(:,4), psnr,'k');
 grid on;
 xlabel('bpp');
 ylabel('PSNR');
 title('image compresion');
-legend('256 models','1 model','context encoding','Location','NorthWest');
+legend('256 models','1 model','context encoding','sign context','Location','NorthWest');
 end

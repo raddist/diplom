@@ -75,7 +75,7 @@ public:
 	// @brief ctor
 	// @param i_len - [in], capacity of the model
 	// @param i_startValue - [in], start of real input/output model interval
-	explicit Model(int i_numOfChars);
+	explicit Model(int i_numOfChars, bool isEOFneeded = false);
 
 	// @brief
 	void StartModel();

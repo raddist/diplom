@@ -189,7 +189,7 @@ void qSchedule(double i_qConst)
 	Sarcoder.decode(s_encoded, s_decoded, map, s_foundedSize);
 
 	// dequant
-	quant.deQuantArray(s_decoded, output, s_foundedSize);
+	quant.deQuantArray(decoded, output, s_foundedSize);
 
 	// invert
 	wvlt.invert2d(output, input, img.GetWidth(), img.GetHeight(), 4);

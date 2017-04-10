@@ -15,10 +15,10 @@ Model::Model(bool isEOFneeded /*= true*/)
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-Model::Model(int i_numOfChars)
+Model::Model(int i_numOfChars, bool isEOFneeded /*= false*/)
 {
 	m_numOfChars = i_numOfChars;
-	m_numOfSymbols = m_numOfChars;
+	m_numOfSymbols = m_numOfChars + (isEOFneeded ? 1 : 0);
 	cum_freq = new unsigned int[m_numOfSymbols + 1];
 }
 
@@ -99,7 +99,7 @@ Arcoder::Arcoder(int i_memoryLen)
 
 	for (int i = 0; i < m_numOfModelsNeeded; ++i)
 	{
-		m_model.emplace_back(NO_OF_CHARS);
+		m_model.emplace_back(NO_OF_CHARS, true);
 	}
 
 	conv.Initialize();
