@@ -379,14 +379,18 @@ int Arcoder::decode_symbol()
 	unsigned long range, cum;
 	int symbol;
 	range = high - low + 1;
+
 	// число cum - это число value, пересчитанное из интервала
 	// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
 	cum = ((value - low + 1)*m_model[m_currentModel].GetLastFreq() - 1) / range;
+
 	// поиск интервала, соответствующего числу cum
-	for (symbol = 0; m_model[m_currentModel].GetFreq(symbol + 1) <= cum; symbol++);
+	symbol = m_model[m_currentModel].findInterval(cum);
+
 	// пересчет границ
 	high = low + range*m_model[m_currentModel].GetFreq(symbol + 1) / m_model[m_currentModel].GetLastFreq() - 1;
 	low = low + range*m_model[m_currentModel].GetFreq(symbol) / m_model[m_currentModel].GetLastFreq();
+
 	for (;;)
 	{		// подготовка к декодированию следующих символов
 		if (high<HALF) {/* Старшие биты low и high - нулевые */ }

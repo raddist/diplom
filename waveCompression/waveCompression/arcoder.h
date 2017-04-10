@@ -88,6 +88,15 @@ public:
 	// @brief
 	unsigned int GetLastFreq();
 
+	// @brief 
+	unsigned int findInterval(unsigned long cum)
+	{
+		int symbol;
+		for (symbol = 0; GetFreq(symbol + 1) <= cum; symbol++);
+
+		return symbol;
+	}
+
 private:
 	int m_numOfChars;
 	int m_numOfSymbols;
