@@ -1,7 +1,2 @@
-﻿  core.cpp
-  arcoder.cpp
-  Создание кода...
-  Пропуск... (изменения не обнаружены)
-  signContextArcoder.cpp
-  contextArcoder.cpp
+﻿  signContextArcoder.cpp
   waveCompression.vcxproj -> C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\waveCompression.exe

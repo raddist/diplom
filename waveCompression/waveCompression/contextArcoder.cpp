@@ -97,8 +97,23 @@ int ContextArcoder::findModelByP(double p)
 /////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ContextArcoder::encode_symbol(int symbol)
+///////////////////////////////////////////////////////////////////////
+void ContextArcoder::basicEncode(int i_index)
 {
+	int8_t symbol = data_in[i_index];
+
+	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+	Arcoder::encode_symbol(uSymbol);
+	update_model(uSymbol);
+}
+
+///////////////////////////////////////////////////////////////////////
+void ContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
+{
+	double p = calcP(index, data_in, i_isOnTheBord);
+	m_currentModel = findModelByP(p);
+	int8_t symbol = data_in[index];
+
 	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
 	Arcoder::encode_symbol(uSymbol);
 	update_model(uSymbol);
@@ -177,10 +192,11 @@ void ContextArcoder::encodeSubband(SubbandRect rect)
 		for (int i = horizontalFrom; i <= horizontalTo; ++i)
 		{
 			int index = j*imgWidth + i;
+			m_curSymbolIndex = index;
 
 			if (rect.top == 0 && rect.left == 0)
 			{
-				encodeTopLeftSubbandSymbol(index);
+				basicEncode(index);
 			}
 			else if (j != 0 && i != 0)
 			{
@@ -202,9 +218,7 @@ void ContextArcoder::encodeTopRow(int startIndex, int endIndex)
 {
 	for (int i = startIndex; i < endIndex; ++i)
 	{
-		int8_t symbol = data_in[i];
-
-		encode_symbol(symbol);
+		basicEncode(i);
 	}
 }
 
@@ -214,28 +228,8 @@ void ContextArcoder::encodeLeftColumn(int startIndex, int endIndex)
 	for (int j = startIndex; j < endIndex; ++j)
 	{
 		int index = j*imgWidth;
-		int8_t symbol = data_in[index];
-
-		encode_symbol(symbol);
+		basicEncode(index);
 	}
-}
-
-///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encodeTopLeftSubbandSymbol(int index)
-{
-	int8_t symbol = data_in[index];
-
-	encode_symbol(symbol);
-}
-
-///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
-{
-	double p = calcP(index, data_in, i_isOnTheBord);
-	m_currentModel = findModelByP(p);
-	int8_t symbol = data_in[index];
-
-	encode_symbol(symbol);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -244,11 +238,29 @@ void ContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
 /////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int ContextArcoder::decode_symbol()
+///////////////////////////////////////////////////////////////////////
+void ContextArcoder::basicDecode(int i_index)
 {
 	int uSymbol = Arcoder::decode_symbol();
 	update_model(uSymbol);
-	return conv.ConvertToSigned(uSymbol);
+	int8_t symbol = conv.ConvertToSigned(uSymbol);
+
+	data_out[i_index] = symbol;
+	sizeOut++;
+}
+
+///////////////////////////////////////////////////////////////////////
+void ContextArcoder::decodeSymbolByContext(int index, bool i_isOnTheBord)
+{
+	double p = calcP(index, data_out, i_isOnTheBord);
+	m_currentModel = findModelByP(p);
+
+	int uSymbol = Arcoder::decode_symbol();
+	update_model(uSymbol);
+	int8_t symbol = conv.ConvertToSigned(uSymbol);
+
+	data_out[index] = symbol;
+	sizeOut++;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -320,10 +332,11 @@ void ContextArcoder::decodeSubband(SubbandRect rect)
 		for (int i = horizontalFrom; i <= horizontalTo; ++i)
 		{
 			int index = j*imgWidth + i;
+			m_curSymbolIndex = index;
 
 			if (rect.top == 0 && rect.left == 0)
 			{
-				decodeTopLeftSubbandSymbol(index);
+				basicDecode(index);
 			}
 			else if (j != 0 && i != 0)
 			{
@@ -345,10 +358,7 @@ void ContextArcoder::decodeTopRow(int startIndex, int endIndex)
 {
 	for (int i = startIndex; i < endIndex; ++i)
 	{
-		int8_t symbol = decode_symbol();
-
-		data_out[i] = symbol;
-		sizeOut++;
+		basicDecode(i);
 	}
 }
 
@@ -358,31 +368,7 @@ void ContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
 	for (int j = startIndex; j < endIndex; ++j)
 	{
 		int index = j*imgWidth;
-
-		int8_t symbol = decode_symbol();
-
-		data_out[index] = symbol;
-		sizeOut++;
+		basicDecode(index);
 	}
 }
 
-///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decodeTopLeftSubbandSymbol(int index)
-{
-	int8_t symbol = decode_symbol();
-
-	data_out[index] = symbol;
-	sizeOut++;
-}
-
-///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decodeSymbolByContext(int index, bool i_isOnTheBord)
-{
-	double p = calcP(index, data_out, i_isOnTheBord);
-	m_currentModel = findModelByP(p);
-
-	int8_t symbol = decode_symbol();
-
-	data_out[index] = symbol;
-	sizeOut++;
-}

@@ -4,7 +4,7 @@ I = imread('lena.bmp');
 quant = 27.3;
 
 N = 8;
-bpp = ones(N,4);
+bpp = ones(N,5);
 psnr = ones(N,1);
 
 for i = 1:N
@@ -85,6 +85,23 @@ for i = 1:N
     fclose(fid); 
     bpp(i,4) = cnt / size(I,1) / size(I,2) * 8;
     
+    % context for sign context
+    fid = fopen('sc_encoded.bin', 'rb');
+    if fid == -1 
+         error('File is not opened'); 
+    end
+    
+    cnt=1;              % инициализация счетчика 
+    while ~feof(fid)    % цикл, пока не достигнут конец файла 
+        [V,N] = fread(fid, 1, 'int8');  %считывание одного 
+
+        if N > 0        % если элемент был прочитан успешно, то 
+        cnt=cnt+1;  % увеличиваем счетчик на 1 
+        end
+    end
+    fclose(fid); 
+    bpp(i,5) = cnt / size(I,1) / size(I,2) * 8;
+    
     quant = quant*3/2;
 
     figure();
@@ -94,10 +111,12 @@ end
 plot(bpp(:,1), psnr,'b',...
     bpp(:,2), psnr,'r',...
     bpp(:,3), psnr,'g',...
-    bpp(:,4), psnr,'k');
+    bpp(:,4), psnr,'k',...
+    bpp(:,5), psnr,'b');
 grid on;
 xlabel('bpp');
 ylabel('PSNR');
 title('image compresion');
-legend('256 models','1 model','context encoding','sign context','Location','NorthWest');
+legend('256 models','1 model','context encoding','sign context','context for sign',...
+    'Location','NorthWest');
 end

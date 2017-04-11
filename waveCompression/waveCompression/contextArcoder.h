@@ -35,21 +35,17 @@ public:
 	/////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// @brief кодирование символа
-	// @param symbol - in, поступивший символ
-	virtual void encode_symbol(int symbol);
+	virtual void basicEncode(int i_index);
+
+	virtual void encodeSymbolByContext(int index, bool i_isOnTheBord = false);
 
 	// @brief кодирование информации
 	void encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out);
 
 	//
-	void encodeSubband(SubbandRect rect);
+	virtual void encodeSubband(SubbandRect rect);
 
-	void encodeTopLeftSubbandSymbol(int index);
-
-	void encodeSymbolByContext(int index, bool i_isOnTheBord = false);
-
-	void encodeTopRow(int startIndex, int endIndex);
+	virtual void encodeTopRow(int startIndex, int endIndex);
 
 	void encodeLeftColumn(int startIndex, int endIndex);
 
@@ -59,20 +55,17 @@ public:
 	/////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// @brief декодирование символа
-	virtual int decode_symbol();
+	virtual void basicDecode(int i_index);
+
+	virtual void decodeSymbolByContext(int index, bool i_isOnTheBord = false);
 
 	// @brief декодирование информации
 	void decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
 
 	//
-	void decodeSubband(SubbandRect rect);
+	virtual void decodeSubband(SubbandRect rect);
 
-	void decodeTopLeftSubbandSymbol(int index);
-
-	void decodeSymbolByContext(int index, bool i_isOnTheBord = false);
-
-	void decodeTopRow(int startIndex, int endIndex);
+	virtual void decodeTopRow(int startIndex, int endIndex);
 
 	void decodeLeftColumn(int startIndex, int endIndex);
 	
@@ -81,4 +74,5 @@ protected:
 	Context3x3 m_context;
 	Limits limits;
 	int m_subbandType;
+	int m_curSymbolIndex;
 };

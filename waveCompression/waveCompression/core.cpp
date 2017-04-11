@@ -148,6 +148,12 @@ void qSchedule(double i_qConst)
 	int s_out_size = 0;
 	Sarcoder.encode(post, s_encoded, map, img_size, s_out_size);
 
+	// context for sign
+	SignContextArcoder SCarcoder(context, true);
+	int8_t* sc_encoded = new int8_t[img_size];
+	int sc_out_size = 0;
+	SCarcoder.encode(post, sc_encoded, map, img_size, sc_out_size);
+
 	// write encoded data in file
 	FILE* temp = fopen("encoded.bin", "w+b");
 	fwrite(encoded, 1, out_size, temp);
@@ -167,6 +173,11 @@ void qSchedule(double i_qConst)
 	FILE* s_temp = fopen("s_encoded.bin", "w+b");
 	fwrite(s_encoded, 1, s_out_size, s_temp);
 	fclose(s_temp);
+
+	// write sign context encoded data in file
+	FILE* sc_temp = fopen("sc_encoded.bin", "w+b");
+	fwrite(sc_encoded, 1, sc_out_size, sc_temp);
+	fclose(sc_temp);
 
 	// decode
 	int8_t* decoded = new int8_t[img_size];
@@ -188,8 +199,13 @@ void qSchedule(double i_qConst)
 	int s_foundedSize = 0;
 	Sarcoder.decode(s_encoded, s_decoded, map, s_foundedSize);
 
+	// context for signdecode
+	int8_t* sc_decoded = new int8_t[img_size];
+	int sc_foundedSize = 0;
+	SCarcoder.decode(sc_encoded, sc_decoded, map, sc_foundedSize);
+
 	// dequant
-	quant.deQuantArray(decoded, output, s_foundedSize);
+	quant.deQuantArray(decoded, output, sc_foundedSize);
 
 	// invert
 	wvlt.invert2d(output, input, img.GetWidth(), img.GetHeight(), 4);
@@ -344,6 +360,76 @@ int test4()
 	return s_out_size;
 }
 
+/////////////////////////////////////////////////////////////////////////////
+int test5()
+{
+	BmpImage img(in, 1);
+	int img_size = img.GetHeight() * img.GetHeight();
+
+	Real* input = static_cast<Real*>(img.GetDoubleData());
+	Real *output = new Real[img_size];
+
+	//using wavelet
+	Wavelet wvlt(&Antonini);
+	wvlt.transform2d(input, output, 512, 512, 4);
+
+	// quant
+	Quantor quant(static_cast<double*>(output), img_size);
+	int8_t* post = quant.quantArray(static_cast<double*>(output), img_size);
+
+
+	SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
+	// context encode
+	double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	double ctemp1[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+	Context3x3 context;
+	context.maskD = ctemp;
+	context.maskH = ctemp1;
+	context.maskV = ctemp1;
+	//
+	SignContextArcoder SCarcoder(context, true);
+	int8_t* sc_encoded = new int8_t[img_size];
+	int sc_out_size = 0;
+	SCarcoder.encode(post, sc_encoded, map, img_size, sc_out_size);
+
+	// write encoded data in file
+	FILE* temp = fopen("encoded.bin", "w+b");
+	fwrite(sc_encoded, 1, sc_out_size, temp);
+	fclose(temp);
+
+	// context decode
+	int8_t* sc_decoded = new int8_t[img_size];
+	int sc_foundedSize = 0;
+	SCarcoder.decode(sc_encoded, sc_decoded, map, sc_foundedSize);
+
+	for (int i = 0; i < img_size; ++i)
+	{
+		if (post[i] != sc_decoded[i])
+		{
+			int tempdas = 0;
+		}
+	}
+
+	// dequant
+	quant.deQuantArray(sc_decoded, output, sc_foundedSize);
+
+	// invert
+	wvlt.invert2d(output, input, img.GetWidth(), img.GetHeight(), 4);
+
+	img.SetDataFromDouble(static_cast<double*>(input));
+
+	img.WriteBmp(out);
+
+	delete[] post;
+	delete[] sc_encoded;
+	delete[] sc_decoded;
+	delete[] input;
+	delete[] output;
+
+	printf("\n%d\n", sc_out_size);
+
+	return sc_out_size;
+}
 
 void _cdecl main(int argc, char **argv)
 {
@@ -358,6 +444,7 @@ void _cdecl main(int argc, char **argv)
 		if (argv[1][0] == '2') qSchedule(atof(argv[4]));
 		if (argv[1][0] == '3') test3(argv);
 		if (argv[1][0] == '4') test4();
+		if (argv[1][0] == '5') test5();
 		fclose(in);
 		fclose(out);
 	}
