@@ -20,6 +20,8 @@ public:
 
 	virtual void encodeTopRow(int startIndex, int endIndex);
 
+	virtual void encodeLeftColumn(int startIndex, int endIndex);
+
 	virtual void encodeSubband(SubbandRect rect);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,6 +36,8 @@ public:
 	// @brief
 	virtual void decodeTopRow(int startIndex, int endIndex) override;
 
+	virtual void decodeLeftColumn(int startIndex, int endIndex);
+
 	virtual void decodeSubband(SubbandRect rect);
 
 	// @brief find model for sign encoding
@@ -43,6 +47,6 @@ public:
 private:
 	bool m_isContextForSignNeeded;
 
-	std::vector<int> m_signLimits;
+	std::vector<double> m_signLimits;
 };
 

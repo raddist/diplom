@@ -20,56 +20,28 @@ SignContextArcoder::SignContextArcoder(Context3x3 i_context,
 	}
 	conv.Initialize();
 
+	// add limits for sign encoding
+	m_signLimits.push_back(-2);
+	m_signLimits.push_back(-0.1);
+	m_signLimits.push_back(0.1);
+	m_signLimits.push_back(2);
+
 	if (i__isContextForSignNeeded)
 	{
-		m_numOfModelsNeeded += 4;
-		for (int i = 0; i < 4; ++i)
+		m_numOfModelsNeeded += m_signLimits.size() + 1;
+		for (int i = 0; i < m_signLimits.size() + 1; ++i)
 		{
 			m_model.emplace_back(2);
 		}
 	}
 
+	// basic sign model
 	Model signModel(2);
 
 	// add new sign model
 	m_numOfModelsNeeded++;
 	m_model.emplace_back(2);
-
-	// add limits for sign encoding
-	m_signLimits.push_back(-1);
-	m_signLimits.push_back(0);
-	m_signLimits.push_back(1);
 }
-
-///////////////////////////////////////////////////////////////
-/*void SignContextArcoder::encode_symbol(int symbol)
-{
-	Arcoder::encode_symbol(abs(symbol));
-	update_model(abs(symbol));
-	int storageCurModelNumber = m_currentModel;
-
-	// encode sign bit
-	if (!m_isContextForSignNeeded)
-	{
-		m_currentModel = m_numOfModelsNeeded - 1;
-	}
-	else
-	{
-		FindSignModel(data_in);
-	}
-
-	if (symbol > 0)
-	{
-		Arcoder::encode_symbol(1);
-	}
-	else if (symbol < 0)
-	{
-		Arcoder::encode_symbol(0);
-	}
-
-	// back to symbol model
-	m_currentModel = storageCurModelNumber;
-}*/
 
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::basicEncode(int i_index)
@@ -147,9 +119,10 @@ void SignContextArcoder::encodeSubband(SubbandRect rect)
 			{
 				basicEncode(index);
 			}
-			else if (j > 1  && i != 0)
+			else if (j > 1  && i > 1)
 			{
-				if (j != rect.bot - 1 && i != horizontalTo)
+				if (j != rect.bot - 1 && i != horizontalTo &&
+					(m_subbandType != 3 || i < horizontalTo - 1 ))
 				{
 					encodeSymbolByContext(index);
 				}
@@ -161,35 +134,6 @@ void SignContextArcoder::encodeSubband(SubbandRect rect)
 		}
 	}
 }
-
-///////////////////////////////////////////////////////////////
-/*int SignContextArcoder::decode_symbol()
-{
-	int uSymbol = Arcoder::decode_symbol();
-	update_model(uSymbol);
-	int storageCurModelNumber = m_currentModel;
-
-	if (uSymbol == 0)
-	{
-		return 0;
-	}
-
-	// decode sign bit
-	if (!m_isContextForSignNeeded)
-	{
-		m_currentModel = m_numOfModelsNeeded - 1;
-	}
-	else
-	{
-		FindSignModel(data_out);
-	}
-
-	int signBit = Arcoder::decode_symbol();
-
-	m_currentModel = storageCurModelNumber;
-
-	return (signBit == 1) ? uSymbol: -uSymbol;
-}*/
 
 void SignContextArcoder::basicDecode(int i_index)
 {
@@ -268,9 +212,10 @@ void SignContextArcoder::decodeSubband(SubbandRect rect)
 			{
 				basicDecode(index);
 			}
-			else if (j > 1 && i != 0)
+			else if (j > 1 && i > 1)
 			{
-				if (j != rect.bot - 1 && i != horizontalTo)
+				if (j != rect.bot - 1 && i != horizontalTo &&
+					(m_subbandType != 3 || i < horizontalTo - 1))
 				{
 					decodeSymbolByContext(index);
 				}
@@ -296,6 +241,18 @@ void SignContextArcoder::encodeTopRow(int startIndex, int endIndex)
 }
 
 ///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::encodeLeftColumn(int startIndex, int endIndex)
+{
+	ContextArcoder::encodeLeftColumn(startIndex, endIndex);
+
+	if (m_isContextForSignNeeded)
+	{
+		// encode one more top row
+		ContextArcoder::encodeLeftColumn(startIndex + 1, endIndex + 1);
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::decodeTopRow(int startIndex, int endIndex)
 {
 	ContextArcoder::decodeTopRow(startIndex, endIndex);
@@ -307,14 +264,49 @@ void SignContextArcoder::decodeTopRow(int startIndex, int endIndex)
 	}
 }
 
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
+{
+	ContextArcoder::decodeLeftColumn(startIndex, endIndex);
+
+	if (m_isContextForSignNeeded)
+	{
+		// decode one more top row
+		ContextArcoder::decodeLeftColumn(startIndex + 1, endIndex + 1);
+	}
+}
+
 ///////////////////////////////////////////////////////////////
 int SignContextArcoder::FindSignModel(int i_index, int8_t *decoded_data)
 {
 	double sum = 0;
 	
-	sum = -0.5 * (decoded_data[i_index - 2*imgWidth - 1] + decoded_data[i_index - 2 * imgWidth + 1] + 
-		decoded_data[i_index - imgWidth - 1] + decoded_data[i_index - imgWidth + 1]) +
-		(decoded_data[i_index - imgWidth] + decoded_data[i_index - 2*imgWidth]);
+	switch (m_subbandType)
+	{
+	case 2:	// vertical
+		sum = -0.5 * (decoded_data[i_index - 2 * imgWidth - 1] + decoded_data[i_index - 2 * imgWidth + 1] +
+			decoded_data[i_index - imgWidth - 1] + decoded_data[i_index - imgWidth + 1]) +
+			(decoded_data[i_index - imgWidth] + decoded_data[i_index - 2 * imgWidth]);
+
+	case 1:	// horizontal
+		sum = -0.5 * (decoded_data[i_index - imgWidth - 2] + decoded_data[i_index -  imgWidth - 1] +
+			decoded_data[i_index + imgWidth - 2] + decoded_data[i_index + imgWidth - 1]) +
+			(decoded_data[i_index -2] + decoded_data[i_index - 1]);
+
+	case 3:
+	{
+		// diagonal
+		double leftSum = -0.5 * (decoded_data[i_index - imgWidth - 2] + decoded_data[i_index - 1] +
+			decoded_data[i_index - 2 * imgWidth - 1] + decoded_data[i_index - imgWidth ]) +
+			(decoded_data[i_index - 2*imgWidth - 2] + decoded_data[i_index - imgWidth - 1]);
+
+		double rightSum = -0.5 * (decoded_data[i_index - imgWidth + 2] + 
+			decoded_data[i_index - 2 * imgWidth + 1] + decoded_data[i_index - imgWidth]) -
+			1.0 * (decoded_data[i_index - imgWidth + 2]) +
+			(decoded_data[i_index - 2 * imgWidth - 2] + decoded_data[i_index - imgWidth - 1]);
+		sum = (leftSum > rightSum) ? leftSum : rightSum;
+	}
+	}
 
 	for (int i = 0; i < static_cast<int>(m_signLimits.size() - 1); ++i)
 	{

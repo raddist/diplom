@@ -47,7 +47,7 @@ public:
 
 	virtual void encodeTopRow(int startIndex, int endIndex);
 
-	void encodeLeftColumn(int startIndex, int endIndex);
+	virtual void encodeLeftColumn(int startIndex, int endIndex);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -67,7 +67,7 @@ public:
 
 	virtual void decodeTopRow(int startIndex, int endIndex);
 
-	void decodeLeftColumn(int startIndex, int endIndex);
+	virtual void decodeLeftColumn(int startIndex, int endIndex);
 	
 
 protected:

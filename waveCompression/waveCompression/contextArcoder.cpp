@@ -362,12 +362,13 @@ void ContextArcoder::decodeTopRow(int startIndex, int endIndex)
 	}
 }
 
+// TODO change row and col logic
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
 {
-	for (int j = startIndex; j < endIndex; ++j)
+	for (int j = 0; j < endIndex - startIndex; ++j)
 	{
-		int index = j*imgWidth;
+		int index = startIndex + j*imgWidth;
 		basicDecode(index);
 	}
 }
