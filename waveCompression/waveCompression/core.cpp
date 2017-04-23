@@ -83,6 +83,15 @@ private:
 		context.maskD = ctemp;
 		context.maskH = ctemp1;
 		context.maskV = ctemp1;
+
+		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
+		double ctempV[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		double ctempD[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		Context3x3 context_2;
+		context_2.maskD = ctempD;
+		context_2.maskH = ctempH;
+		context_2.maskV = ctempV;
+
 		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 		///////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,7 +132,7 @@ private:
 		///////////////////////////////////////////////////////////////////////////////////////
 
 		// encode 4
-		SignContextArcoder sCarcoder(qStruct, context);
+		SignContextArcoder sCarcoder(qStruct, context_2);
 		int8_t* encoded_4 = new int8_t[img_size];
 		int out_size_4 = 0;
 		sCarcoder.encode(quanted, encoded_4, map, img_size, out_size_4);
@@ -135,7 +144,7 @@ private:
 		///////////////////////////////////////////////////////////////////////////////////////
 
 		// encode 5
-		SignContextArcoder Sarcoder(qStruct, context, true);
+		SignContextArcoder Sarcoder(qStruct, context_2, true);
 		int8_t* encoded_5 = new int8_t[img_size];
 		int out_size_5 = 0;
 		Sarcoder.encode(quanted, encoded_5, map, img_size, out_size_5);
@@ -368,12 +377,13 @@ private:
 		qMinCap qStruct = quantilization(transformed, quanted, img_size, 27);
 
 		// encode
-		double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
-		double ctemp1[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
+		double ctempV[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		double ctempD[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
 		Context3x3 context;
-		context.maskD = ctemp;
-		context.maskH = ctemp1;
-		context.maskV = ctemp1;
+		context.maskD = ctempD;
+		context.maskH = ctempH;
+		context.maskV = ctempV;
 		SignContextArcoder Carcoder(qStruct, context);
 		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 		int8_t* encoded = new int8_t[img_size];
@@ -423,12 +433,14 @@ private:
 		qMinCap qStruct = quantilization(transformed, quanted, img_size, 27);
 
 		// encode
-		double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
-		double ctemp1[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
+		double ctempV[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		double ctempD[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
 		Context3x3 context;
-		context.maskD = ctemp;
-		context.maskH = ctemp1;
-		context.maskV = ctemp1;
+		context.maskD = ctempD;
+		context.maskH = ctempH;
+		context.maskV = ctempV;
+
 		SignContextArcoder Carcoder(qStruct, context, true);
 		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 		int8_t* encoded = new int8_t[img_size];

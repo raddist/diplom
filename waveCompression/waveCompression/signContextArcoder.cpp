@@ -111,72 +111,101 @@ void SignContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::encodeSubband(SubbandRect rect)
 {
-	int horizontalFrom = rect.left;
-	int horizontalTo = rect.right - 1;	// include last pixel in [horizontalFrom horizontalTo]
-
-	for (int j = rect.top; j < rect.bot; ++j)
+	switch (m_subbandType)
 	{
-		for (int i = horizontalFrom; i <= horizontalTo; ++i)
+	case 0:
+		encodeTopLeftSubband(rect);
+		break;
+	case 1:
+		encodeHorizontalSubband(rect);
+		break;
+	case 2:
+		encodeVerticalSubband(rect);
+		break;
+	case 3:
+		encodeDiagonalSubband(rect);
+		break;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::encodeTopLeftSubband(SubbandRect rect)
+{
+	for (int row = rect.top; row < rect.bot; ++row)
+	{
+		for (int col = rect.left; col < rect.right; ++col)
 		{
-			int index = j*imgWidth + i;
-			m_curSymbolIndex = index;
-
-			if (index == 1598)
-			{
-				int temp = 0;
-			}
-
-			if (rect.top == 0 && rect.left == 0)
-			{
-				basicEncode(index);
-			}
-			else if (j != 0 && i != 0 && !m_isContextForSignNeeded ||
-						j > 1  && i > 1 && m_isContextForSignNeeded)
-			{
-				if (j != rect.bot - 1 && i != horizontalTo &&
-					(m_subbandType != 3 || i < horizontalTo - 1 ))
-				{
-					encodeSymbolByContext(index);
-				}
-				else
-				{
-					encodeSymbolByContext(index, true);
-				}
-			}
+			int index = row*imgWidth + col;
+			basicEncode(index);
 		}
 	}
 }
 
+///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::encodeHorizontalSubband(SubbandRect rect)
 {
-	for (int i = rect.left; i < rect.right; ++i)
+	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
+	for (int col = rect.left; col < rect.right; ++col)
 	{
-		for (int j = rect.top; j < rect.bot; ++j)
+		for (int row = startTopIndex; row < rect.bot; ++row)
 		{
-			int index = j*imgWidth + i;
-			m_curSymbolIndex = index;
+			int index = row*imgWidth + col;
 
-			else if (j != 0 && i != 0 && !m_isContextForSignNeeded ||
-				j > 1 && i > 1 && m_isContextForSignNeeded)
+			if (row != rect.bot - 1 && col != rect.right - 1)
 			{
-				if (j != rect.bot - 1 && i != horizontalTo &&
-					(m_subbandType != 3 || i < horizontalTo - 1))
-				{
-					encodeSymbolByContext(index);
-				}
-				else
-				{
-					encodeSymbolByContext(index, true);
-				}
+				encodeSymbolByContext(index);
+			}
+			else
+			{
+				encodeSymbolByContext(index, true);
 			}
 		}
 	}
 }
 
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::encodeVerticalSubband(SubbandRect rect) 
+{
+	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
 
-void SignContextArcoder::encodeHorizontalSubband(SubbandRect rect);
+	for (int row = rect.top; row < rect.bot; ++row)
+	{
+		for (int col = startLeftIndex; col < rect.right; ++col)
+		{
+			int index = row*imgWidth + col;
 
-void SignContextArcoder::encodeHorizontalSubband(SubbandRect rect);
+			if (row != rect.bot - 1 && col != rect.right - 1)
+			{
+				encodeSymbolByContext(index);
+			}
+			else
+			{
+				encodeSymbolByContext(index, true);
+			}
+		}
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::encodeDiagonalSubband(SubbandRect rect)
+{
+	for (int row = rect.top; row < rect.bot; ++row)	
+	{
+		for (int col = rect.left; col < rect.right; ++col)
+		{
+			int index = row*imgWidth + col;
+
+			if (row != rect.bot - 1 && col < rect.right - 2)
+			{
+				encodeSymbolByContext(index);
+			}
+			else
+			{
+				encodeSymbolByContext(index, true);
+			}
+		}
+	}
+}
 
 void SignContextArcoder::basicDecode(int i_index)
 {
@@ -184,10 +213,6 @@ void SignContextArcoder::basicDecode(int i_index)
 	update_model(uSymbol);
 	int storageCurModelNumber = m_currentModel;
 
-	if (i_index == 1088)
-	{
-		int temp = 0;
-	}
 	if (uSymbol == 0)
 	{
 		m_decodedData[i_index] = 0;
@@ -247,37 +272,97 @@ void SignContextArcoder::decodeSymbolByContext(int i_index, bool i_isOnTheBord)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::decodeSubband(SubbandRect rect)
 {
-	int horizontalFrom = rect.left;
-	int horizontalTo = rect.right - 1;	// include last pixel in [horizontalFrom horizontalTo]
-
-	for (int j = rect.top; j < rect.bot; ++j)
+	switch (m_subbandType)
 	{
-		for (int i = horizontalFrom; i <= horizontalTo; ++i)
+	case 0:
+		decodeTopLeftSubband(rect);
+		break;
+	case 1:
+		decodeHorizontalSubband(rect);
+		break;
+	case 2:
+		decodeVerticalSubband(rect);
+		break;
+	case 3:
+		decodeDiagonalSubband(rect);
+		break;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::decodeTopLeftSubband(SubbandRect rect)
+{
+	for (int row = rect.top; row < rect.bot; ++row)
+	{
+		for (int col = rect.left; col < rect.right; ++col)
 		{
-			int index = j*imgWidth + i;
-			m_curSymbolIndex = index;
+			int index = row*imgWidth + col;
+			basicDecode(index);
+		}
+	}
+}
 
-			if (index == 1598)
-			{
-				int temp = 0;
-			}
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::decodeHorizontalSubband(SubbandRect rect)
+{
+	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
+	for (int col = rect.left; col < rect.right; ++col)
+	{
+		for (int row = startTopIndex; row < rect.bot; ++row)
+		{
+			int index = row*imgWidth + col;
 
-			if (rect.top == 0 && rect.left == 0)
+			if (row != rect.bot - 1 && col != rect.right - 1)
 			{
-				basicDecode(index);
+				decodeSymbolByContext(index);
 			}
-			else if (j != 0 && i != 0 && !m_isContextForSignNeeded ||
-				j > 1 && i > 1 && m_isContextForSignNeeded)
+			else
 			{
-				if (j != rect.bot - 1 && i != horizontalTo &&
-					(m_subbandType != 3 || i < horizontalTo - 1))
-				{
-					decodeSymbolByContext(index);
-				}
-				else
-				{
-					decodeSymbolByContext(index, true);
-				}
+				decodeSymbolByContext(index, true);
+			}
+		}
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::decodeVerticalSubband(SubbandRect rect)
+{
+	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
+
+	for (int row = rect.top; row < rect.bot; ++row)
+	{
+		for (int col = startLeftIndex; col < rect.right; ++col)
+		{
+			int index = row*imgWidth + col;
+
+			if (row != rect.bot - 1 && col != rect.right - 1)
+			{
+				decodeSymbolByContext(index);
+			}
+			else
+			{
+				decodeSymbolByContext(index, true);
+			}
+		}
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+void SignContextArcoder::decodeDiagonalSubband(SubbandRect rect)
+{
+	for (int row = rect.top; row < rect.bot; ++row)
+	{
+		for (int col = rect.left; col < rect.right; ++col)
+		{
+			int index = row*imgWidth + col;
+
+			if (row != rect.bot - 1 && col < rect.right - 2)
+			{
+				decodeSymbolByContext(index);
+			}
+			else
+			{
+				decodeSymbolByContext(index, true);
 			}
 		}
 	}

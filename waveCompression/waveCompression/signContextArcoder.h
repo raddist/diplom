@@ -24,11 +24,13 @@ public:
 
 	virtual void encodeSubband(SubbandRect rect);
 
-	void encodeHorizontalSubband(SubbandRect rect);
+	void encodeTopLeftSubband(SubbandRect rect);
 
 	void encodeHorizontalSubband(SubbandRect rect);
 
-	void encodeHorizontalSubband(SubbandRect rect);
+	void encodeVerticalSubband(SubbandRect rect);
+
+	void encodeDiagonalSubband(SubbandRect rect);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -45,6 +47,8 @@ public:
 	virtual void decodeLeftColumn(int i_col, int i_startIndex);
 
 	virtual void decodeSubband(SubbandRect rect);
+
+	void decodeTopLeftSubband(SubbandRect rect);
 
 	void decodeHorizontalSubband(SubbandRect rect);
 

@@ -65,6 +65,7 @@ void compareSubband(T* i_left, T* i_right, SubbandRect rect, int imgWidth)
 {
 	int horizontalFrom = rect.left;
 	int horizontalTo = rect.right - 1;	// include last pixel in [horizontalFrom horizontalTo]
+	int prevIndex = 0;
 
 	for (int j = rect.top; j < rect.bot; ++j)
 	{
@@ -78,6 +79,8 @@ void compareSubband(T* i_left, T* i_right, SubbandRect rect, int imgWidth)
 			{
 				int temp = 0;
 			}
+
+			prevIndex = index;
 		}
 	}
 }
