@@ -20,6 +20,12 @@ template <typename T3> T3 abs(T3 value)
 	return (value > 0) ? value : -value;
 }
 
+typedef struct qMinCap {
+	double q;
+	int minValue;
+	int arrCapacity;
+} qMinCap;
+
 typedef struct {
 	double qPos;
 	double qNeg;
@@ -30,32 +36,21 @@ class Quantor
 {
 public:
 
-	Quantor(double i_q)
+	Quantor()
 	{
-		m_q = i_q;
 	}
-	template <typename T>
-	Quantor(T* input, int size)
-	{
-		T min;
-		T max;
-		findMinMax(input, size, min, max);
-		m_q = findQ(min, max);
-	}
-
-	int8_t* quantArray(double* input, int size);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	void deQuantArray(int8_t* input, double* output, int size);
+	qMinCap quantArray(double* input, int* output, int size, double i_q);
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	void deQuantArray(int* input, double* output, int size, double i_q);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	int8_t* myQuantArray(qPair q, double* input, int size);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	void myDeQuantArray(qPair q, int8_t* input, double* output, int size);
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	void findMinMax(double* input, int size, double &min, double &max);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
@@ -66,7 +61,4 @@ public:
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	qPair myFindQ(double min, double max);
-
-private:
-	double m_q = 1;
 };

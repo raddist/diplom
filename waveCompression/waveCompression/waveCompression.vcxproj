@@ -152,6 +152,7 @@
     <ClInclude Include="global.h" />
     <ClInclude Include="quantor.h" />
     <ClInclude Include="signContextArcoder.h" />
+    <ClInclude Include="utils.h" />
     <ClInclude Include="wavelet.h" />
   </ItemGroup>
   <ItemGroup>

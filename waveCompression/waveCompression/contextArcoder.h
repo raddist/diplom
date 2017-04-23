@@ -19,13 +19,13 @@ public:
 
 	ContextArcoder();
 
-	ContextArcoder(Context3x3 i_context);
+	ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context);
 
-	ContextArcoder(Context3x3 i_context, Limits i_limits);
+	ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context, Limits i_limits);
 
 	void reset_model();
 
-	double calcP(int index, int8_t* decoded_data, bool i_isOnTheBord);
+	double calcP(int index, int* decoded_data, bool i_isOnTheBord);
 
 	int findModelByP(double p);
 
@@ -40,14 +40,14 @@ public:
 	virtual void encodeSymbolByContext(int index, bool i_isOnTheBord = false);
 
 	// @brief кодирование информации
-	void encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out);
+	void encode(int* in, int8_t* out, SubbandMap map, int size_in, int &size_out);
 
 	//
 	virtual void encodeSubband(SubbandRect rect);
 
-	virtual void encodeTopRow(int startIndex, int endIndex);
+	virtual void encodeTopRow(int i_row, int i_startIndex);
 
-	virtual void encodeLeftColumn(int startIndex, int endIndex);
+	virtual void encodeLeftColumn(int i_col, int i_startIndex);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -60,14 +60,14 @@ public:
 	virtual void decodeSymbolByContext(int index, bool i_isOnTheBord = false);
 
 	// @brief декодирование информации
-	void decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
+	void decode(int8_t* in, int* out, SubbandMap map, int &size_out);
 
 	//
 	virtual void decodeSubband(SubbandRect rect);
 
-	virtual void decodeTopRow(int startIndex, int endIndex);
+	virtual void decodeTopRow(int i_row, int i_startIndex);
 
-	virtual void decodeLeftColumn(int startIndex, int endIndex);
+	virtual void decodeLeftColumn(int i_col, int i_startIndex);
 	
 
 protected:

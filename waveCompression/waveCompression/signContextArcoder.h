@@ -6,7 +6,7 @@ class SignContextArcoder : public ContextArcoder
 {
 public:
 
-	SignContextArcoder(Context3x3 i_context, bool i__isContextForSignNeeded = false);
+	SignContextArcoder(qMinCap qStruct, Context3x3 i_context, bool i__isContextForSignNeeded = false);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -18,11 +18,17 @@ public:
 
 	virtual void encodeSymbolByContext(int index, bool i_isOnTheBord = false);
 
-	virtual void encodeTopRow(int startIndex, int endIndex);
+	virtual void encodeTopRow(int i_row, int i_startIndex);
 
-	virtual void encodeLeftColumn(int startIndex, int endIndex);
+	virtual void encodeLeftColumn(int i_col, int i_startIndex);
 
 	virtual void encodeSubband(SubbandRect rect);
+
+	void encodeHorizontalSubband(SubbandRect rect);
+
+	void encodeHorizontalSubband(SubbandRect rect);
+
+	void encodeHorizontalSubband(SubbandRect rect);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -34,15 +40,21 @@ public:
 
 	virtual void decodeSymbolByContext(int index, bool i_isOnTheBord = false);
 	// @brief
-	virtual void decodeTopRow(int startIndex, int endIndex) override;
+	virtual void decodeTopRow(int i_row, int i_startIndex) override;
 
-	virtual void decodeLeftColumn(int startIndex, int endIndex);
+	virtual void decodeLeftColumn(int i_col, int i_startIndex);
 
 	virtual void decodeSubband(SubbandRect rect);
 
+	void decodeHorizontalSubband(SubbandRect rect);
+
+	void decodeVerticalSubband(SubbandRect rect);
+
+	void decodeDiagonalSubband(SubbandRect rect);
+
 	// @brief find model for sign encoding
 	// @param index - in, index of coef to encode
-	int FindSignModel(int i_index, int8_t *decoded_data);
+	int FindSignModel(int i_index, int *decoded_data);
 
 private:
 	bool m_isContextForSignNeeded;

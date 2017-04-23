@@ -2,7 +2,9 @@
 
 // 2 Simplest & slowest version of arithmetic codec (almost demo version)
 #include <vector>
+#include "quantor.h"
 
+typedef unsigned int uint;
 
 //для избежания переполнения:	MAX_FREQUENCY * (TOP_VALUE+1) < ULONG_MAX 
 //число MAX_FREQUENCY должно быть не менее, чем в 4 раза меньше TOP_VALUE 
@@ -16,6 +18,8 @@
 #define NO_OF_CHARS					256
 #define EOF_SYMBOL					NO_OF_CHARS			// char-коды: 0..NO_OF_CHARS-1 
 #define NO_OF_SYMBOLS				(NO_OF_CHARS+1)		// + EOF_SYMBOL
+
+#define BUFFER_SIZE					8
 
 /////////////////////////////////////////////////////////////////////////////////////////
 class SubbandMap
@@ -97,6 +101,8 @@ public:
 		return symbol;
 	}
 
+	int GetEof();
+
 private:
 	int m_numOfChars;
 	int m_numOfSymbols;
@@ -118,10 +124,10 @@ public:
 	//		 from	[m_startValue .. m_startValue + m_numOfChars - 1]
 	//		 to		[0 .. m_numOfChars - 1]
 	//		 -1 because of zero is counts as char too
-	uint8_t ConvertToUnsigned(int i_symbol);
+	uint ConvertToUnsigned(int i_symbol);
 
 	// @brief
-	int8_t ConvertToSigned(uint8_t i_symbol);
+	int ConvertToSigned(int i_symbol);
 
 private:
 	int m_startValue;
@@ -134,7 +140,7 @@ public:
 	Arcoder();
 
 	// memory arcoder ctor
-	Arcoder(int i_memoryLen);
+	Arcoder(qMinCap i_qMinCap, int i_memoryLen);
 
 	// @brief инициализация массива частот
 	virtual void start_model(void);
@@ -166,13 +172,13 @@ public:
 	virtual void encode_symbol(int symbol);
 
 	// @brief кодирование информации
-	virtual void encode(int8_t* in, int8_t* out, int size_in, int &size_out);
+	virtual void encode(int* in, int8_t* out, int size_in, int &size_out);
 
 	//
 	virtual void encodeSubband(SubbandRect rect);
 
 	// @brief кодирование информации в нелинейном порядке
-	virtual void mappedEncode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
+	virtual void mappedEncode(int* in, int8_t* out, SubbandMap map, int &size_out);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
@@ -190,20 +196,21 @@ public:
 	virtual int decode_symbol();
 
 	// @brief декодирование информации
-	virtual void decode(int8_t* in, int8_t* out, int size_in, int &size_out);
+	virtual void decode(int8_t* in, int* out, int size_in, int &size_out);
 
 	// 
 	virtual void decodeSubband(SubbandRect rect);
 
 	// @brief декодирование информации в нелинейном порядке
-	virtual void mappedDecode(int8_t* in, int8_t* out, SubbandMap map, int &size_out);
+	virtual void mappedDecode(int8_t* in, int* out, SubbandMap map, int &size_out);
 
 protected:
 	unsigned long						low, high, value;
 	uint8_t								buffer, bits_to_go;
 	int									garbage_bits, bits_to_follow;
 	
-	int8_t *data_in, *data_out;
+	int* m_decodedData;
+	int8_t* m_encodedData;
 	int sizeOut, sizeIn = 0;
 	int imgWidth, imgHeight;
 	int m_currentModel;				//< model to encode/decode next symbol

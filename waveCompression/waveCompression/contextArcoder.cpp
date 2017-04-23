@@ -7,13 +7,13 @@
 #pragma warning(disable: 4996)
 
 ///////////////////////////////////////////////////////////////////////
-ContextArcoder::ContextArcoder() :
+ContextArcoder::ContextArcoder():
 	m_subbandType(0)
 {
 }
 
 ///////////////////////////////////////////////////////////////////////
-ContextArcoder::ContextArcoder(Context3x3 i_context) :
+ContextArcoder::ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context) :
 	m_context(i_context),
 	m_subbandType(0)
 {
@@ -21,30 +21,31 @@ ContextArcoder::ContextArcoder(Context3x3 i_context) :
 	limits.push_back(1);
 	limits.push_back(10);
 
-	m_numOfModelsNeeded = NO_OF_CHARS;
+	m_numOfModelsNeeded = i_qMinCap.arrCapacity;
 
 	for (int i = 0; i < m_numOfModelsNeeded; ++i)
 	{
-		m_model.emplace_back();
+		m_model.emplace_back(i_qMinCap.arrCapacity);
 	}
-	conv.Initialize();
+	conv.Initialize(i_qMinCap.arrCapacity, i_qMinCap.minValue);
 }
 
 ///////////////////////////////////////////////////////////////////////
-ContextArcoder::ContextArcoder(Context3x3 i_context,
+ContextArcoder::ContextArcoder(qMinCap i_qMinCap,
+								Context3x3 i_context,
 								Limits i_limits) :
 	m_context(i_context),
 	m_subbandType(0)
 {
 	limits = i_limits;
 
-	m_numOfModelsNeeded = NO_OF_CHARS;
+	m_numOfModelsNeeded = i_qMinCap.arrCapacity;
 
 	for (int i = 0; i < m_numOfModelsNeeded; ++i)
 	{
-		m_model.emplace_back();
+		m_model.emplace_back(i_qMinCap.arrCapacity);
 	}
-	conv.Initialize();
+	conv.Initialize(i_qMinCap.arrCapacity, i_qMinCap.minValue);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -55,7 +56,7 @@ void ContextArcoder::reset_model(void)
 }
 
 ///////////////////////////////////////////////////////////////////////
-double ContextArcoder::calcP(int index, int8_t *decoded_data, bool i_isOnTheBord)
+double ContextArcoder::calcP(int index, int *decoded_data, bool i_isOnTheBord)
 {
 	double sum = 0;
 	int lim = i_isOnTheBord ? 2 : 3;
@@ -100,9 +101,9 @@ int ContextArcoder::findModelByP(double p)
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::basicEncode(int i_index)
 {
-	int8_t symbol = data_in[i_index];
+	int symbol = m_decodedData[i_index];
 
-	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+	uint uSymbol = conv.ConvertToUnsigned(symbol);
 	Arcoder::encode_symbol(uSymbol);
 	update_model(uSymbol);
 }
@@ -110,20 +111,20 @@ void ContextArcoder::basicEncode(int i_index)
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::encodeSymbolByContext(int index, bool i_isOnTheBord)
 {
-	double p = calcP(index, data_in, i_isOnTheBord);
+	double p = calcP(index, m_decodedData, i_isOnTheBord);
 	m_currentModel = findModelByP(p);
-	int8_t symbol = data_in[index];
+	int symbol = m_decodedData[index];
 
-	uint8_t uSymbol = conv.ConvertToUnsigned(symbol);
+	uint uSymbol = conv.ConvertToUnsigned(symbol);
 	Arcoder::encode_symbol(uSymbol);
 	update_model(uSymbol);
 }
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encode(int8_t* in, int8_t* out, SubbandMap map, int size_in, int &size_out)
+void ContextArcoder::encode(int* in, int8_t* out, SubbandMap map, int size_in, int &size_out)
 {
-	data_in = in;
-	data_out = out;
+	m_decodedData = in;
+	m_encodedData = out;
 
 	int hLeftIndex = map.m_hSize[0];
 	int vTopIndex = map.m_vSize[0];
@@ -141,10 +142,10 @@ void ContextArcoder::encode(int8_t* in, int8_t* out, SubbandMap map, int size_in
 	reset_model();
 
 	// encode top row and left col
-	encodeTopRow(hLeftIndex, imgWidth);
+	encodeTopRow(0, hLeftIndex);
 	reset_model();
 
-	encodeLeftColumn(vTopIndex, imgHeight);
+	encodeLeftColumn(0, vTopIndex);
 	reset_model();
 
 	// read other data
@@ -172,7 +173,6 @@ void ContextArcoder::encode(int8_t* in, int8_t* out, SubbandMap map, int size_in
 		vBotIndex = map.m_vSize[(k + 2) % 5];
 	}
 
-	encode_symbol(EOF_SYMBOL);
 	done_encoding();
 
 	m_subbandType = 0;
@@ -214,20 +214,21 @@ void ContextArcoder::encodeSubband(SubbandRect rect)
 }
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encodeTopRow(int startIndex, int endIndex)
+void ContextArcoder::encodeTopRow(int i_row, int i_startIndex)
 {
-	for (int i = startIndex; i < endIndex; ++i)
+	for (int col = i_startIndex; col < imgWidth; ++col)
 	{
-		basicEncode(i);
+		int index = i_row * imgWidth + col;
+		basicEncode(index);
 	}
 }
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::encodeLeftColumn(int startIndex, int endIndex)
+void ContextArcoder::encodeLeftColumn(int i_col, int i_startIndex)
 {
-	for (int j = startIndex; j < endIndex; ++j)
+	for (int row = i_startIndex; row < imgHeight; ++row)
 	{
-		int index = j*imgWidth;
+		int index = row * imgWidth + i_col;
 		basicEncode(index);
 	}
 }
@@ -243,31 +244,31 @@ void ContextArcoder::basicDecode(int i_index)
 {
 	int uSymbol = Arcoder::decode_symbol();
 	update_model(uSymbol);
-	int8_t symbol = conv.ConvertToSigned(uSymbol);
+	int symbol = conv.ConvertToSigned(uSymbol);
 
-	data_out[i_index] = symbol;
+	m_decodedData[i_index] = symbol;
 	sizeOut++;
 }
 
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::decodeSymbolByContext(int index, bool i_isOnTheBord)
 {
-	double p = calcP(index, data_out, i_isOnTheBord);
+	double p = calcP(index, m_decodedData, i_isOnTheBord);
 	m_currentModel = findModelByP(p);
 
 	int uSymbol = Arcoder::decode_symbol();
 	update_model(uSymbol);
-	int8_t symbol = conv.ConvertToSigned(uSymbol);
+	int symbol = conv.ConvertToSigned(uSymbol);
 
-	data_out[index] = symbol;
+	m_decodedData[index] = symbol;
 	sizeOut++;
 }
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
+void ContextArcoder::decode(int8_t* in, int* out, SubbandMap map, int &size_out)
 {
-	data_in = in;
-	data_out = out;
+	m_encodedData = in;
+	m_decodedData = out;
 
 	int hLeftIndex = map.m_hSize[0];
 	int vTopIndex = map.m_vSize[0];
@@ -285,10 +286,10 @@ void ContextArcoder::decode(int8_t* in, int8_t* out, SubbandMap map, int &size_o
 	reset_model();
 
 	// decode top row and left col
-	decodeTopRow(hLeftIndex, imgWidth);
+	decodeTopRow(0, hLeftIndex);
 	reset_model();
 
-	decodeLeftColumn(vTopIndex, imgHeight);
+	decodeLeftColumn(0, vTopIndex);
 	reset_model();
 
 	// read other data
@@ -354,21 +355,22 @@ void ContextArcoder::decodeSubband(SubbandRect rect)
 }
 
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decodeTopRow(int startIndex, int endIndex)
+void ContextArcoder::decodeTopRow(int i_row, int i_startIndex)
 {
-	for (int i = startIndex; i < endIndex; ++i)
+	for (int col = i_startIndex; col < imgWidth; ++col)
 	{
-		basicDecode(i);
+		int index = i_row * imgWidth + col;
+		basicDecode(index);
 	}
 }
 
 // TODO change row and col logic
 ///////////////////////////////////////////////////////////////////////
-void ContextArcoder::decodeLeftColumn(int startIndex, int endIndex)
+void ContextArcoder::decodeLeftColumn(int i_col, int i_startIndex)
 {
-	for (int j = 0; j < endIndex - startIndex; ++j)
+	for (int row = i_startIndex; row < imgHeight; ++row)
 	{
-		int index = startIndex + j*imgWidth;
+		int index = row * imgWidth + i_col;
 		basicDecode(index);
 	}
 }

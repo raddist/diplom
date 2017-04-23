@@ -1,18 +1,17 @@
-function plotPSNR
+function [psnr bpp] = plotPSNR
 
 I = imread('lena.bmp');
-quant = 27.3;
+quant = 10;
 
 N = 8;
 bpp = ones(N,5);
 psnr = ones(N,1);
 
+
 for i = 1:N
     % call func to encode first file
-    command = strcat('waveCompression.exe 2 lena.bmp test4.bmp',32,num2str(quant) );
+    command = strcat('waveCompression.exe 0 lena.bmp test4.bmp',32,num2str(quant) );
     system(command);
-    
-    pause(1);
     
     %mapped
     fid = fopen('map_encoded.bin', 'rb');

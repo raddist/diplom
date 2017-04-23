@@ -11,7 +11,7 @@ Model::Model(bool isEOFneeded /*= true*/)
 {
 	m_numOfChars = NO_OF_CHARS;
 	m_numOfSymbols = m_numOfChars + (isEOFneeded ? 1 : 0);
-	cum_freq = new unsigned int[m_numOfSymbols + 1];
+	cum_freq = new uint[m_numOfSymbols + 1];
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@ Model::Model(int i_numOfChars, bool isEOFneeded /*= false*/)
 {
 	m_numOfChars = i_numOfChars;
 	m_numOfSymbols = m_numOfChars + (isEOFneeded ? 1 : 0);
-	cum_freq = new unsigned int[m_numOfSymbols + 1];
+	cum_freq = new uint[m_numOfSymbols + 1];
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -66,43 +66,47 @@ unsigned int Model::GetLastFreq()
 }
 
 /////////////////////////////////////////////////////////////////////////////////
+int Model::GetEof()
+{
+	return m_numOfChars;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
 void Converter::Initialize(int i_numOfChars /*= 256*/,
 		  int i_startValue /*= -128*/)
 {
 	m_startValue = i_startValue;
-	_ASSERT(i_startValue + i_numOfChars < 256);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-uint8_t Converter::ConvertToUnsigned(int i_symbol)
+uint Converter::ConvertToUnsigned(int i_symbol)
 {
-	return static_cast<uint8_t>(i_symbol - m_startValue);
+	return static_cast<uint>(i_symbol - m_startValue);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-int8_t Converter::ConvertToSigned(uint8_t i_symbol)
+int Converter::ConvertToSigned(int i_symbol)
 {
-	return static_cast<int8_t>(i_symbol - m_startValue);
+	return static_cast<int>(i_symbol + m_startValue);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 Arcoder::Arcoder():
 	m_numOfModelsNeeded(0)
 {
-	conv.Initialize();
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-Arcoder::Arcoder(int i_memoryLen)
+Arcoder::Arcoder(qMinCap i_qMinCap, int i_memoryLen)
 {
-	m_numOfModelsNeeded = (i_memoryLen == 0) ? 1 :i_memoryLen * NO_OF_SYMBOLS;
+	m_numOfModelsNeeded = (i_memoryLen == 0) ? 1 :i_memoryLen *i_qMinCap.arrCapacity;
 
 	for (int i = 0; i < m_numOfModelsNeeded; ++i)
 	{
-		m_model.emplace_back(NO_OF_CHARS, true);
+		m_model.emplace_back(i_qMinCap.arrCapacity, true);
 	}
 
-	conv.Initialize();
+	conv.Initialize(i_qMinCap.arrCapacity, i_qMinCap.minValue);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +142,7 @@ inline void Arcoder::update_model(int symbol)
 // @brief инициализаци€ глобальных переменных
 void Arcoder::start_encoding(void)
 {
-	bits_to_go = 8;				// свободно бит в битовом буфере вывода
+	bits_to_go = BUFFER_SIZE;				// свободно бит в битовом буфере вывода
 	bits_to_follow = 0;				// число бит, вывод которых отложен
 	low = 0;				// нижн€€ граница интервала
 	high = TOP_VALUE;		// верхн€€ граница интервала
@@ -153,11 +157,11 @@ inline void Arcoder::output_bit(int bit)
 	bits_to_go--;
 	if (bits_to_go == 0)				// битовый буфер заполнен, сброс буфера
 	{
-		*data_out = buffer;
-		data_out++;
+		*m_encodedData = buffer;
+		m_encodedData++;
 		sizeOut++;
 
-		bits_to_go = 8;
+		bits_to_go = BUFFER_SIZE;
 	}
 }
 
@@ -178,7 +182,7 @@ void Arcoder::done_encoding(void)
 	bits_to_follow++;
 	if (low < FIRST_QTR) output_bit_plus_follow(0);
 	else output_bit_plus_follow(1);
-	*data_out = buffer >> bits_to_go;				// записать незаполненный буфер
+	*m_encodedData = buffer >> bits_to_go;				// записать незаполненный буфер
 	sizeOut++;
 }
 
@@ -219,10 +223,10 @@ void Arcoder::encode_symbol(int symbol)
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-void Arcoder::encode(int8_t* in, int8_t* out, int size_in, int &size_out)
+void Arcoder::encode(int* in, int8_t* out, int size_in, int &size_out)
 {
-	data_in = in;
-	data_out = out;
+	m_decodedData = in;
+	m_encodedData = out;
 
 	start_model();
 	start_encoding();
@@ -232,12 +236,12 @@ void Arcoder::encode(int8_t* in, int8_t* out, int size_in, int &size_out)
 	// read data
 	for (int i = 0; i < size_in; ++i)
 	{
-		uint8_t uSymbol= conv.ConvertToUnsigned(data_in[i]);
+		uint uSymbol= conv.ConvertToUnsigned(m_decodedData[i]);
 		encode_symbol(uSymbol);
 		update_model(uSymbol);
 	}
 
-	encode_symbol(EOF_SYMBOL);
+	encode_symbol(m_model[m_currentModel].GetEof());
 	done_encoding();
 
 	sizeIn = 0;
@@ -259,7 +263,7 @@ void Arcoder::encodeSubband(SubbandRect rect)
 		{
 			int index = j*imgWidth + i;
 
-			uint8_t uSymbol = conv.ConvertToUnsigned(data_in[index]);
+			int uSymbol = conv.ConvertToUnsigned(m_decodedData[index]);
 
 			encode_symbol(uSymbol);
 			update_model(uSymbol);
@@ -274,10 +278,10 @@ void Arcoder::encodeSubband(SubbandRect rect)
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-void Arcoder::mappedEncode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
+void Arcoder::mappedEncode(int* in, int8_t* out, SubbandMap map, int &size_out)
 {
-	data_in = in;
-	data_out = out;
+	m_decodedData = in;
+	m_encodedData = out;
 
 	int hLeftIndex = map.m_hSize[0];
 	int vTopIndex = map.m_vSize[0];
@@ -313,8 +317,6 @@ void Arcoder::mappedEncode(int8_t* in, int8_t* out, SubbandMap map, int &size_ou
 		hRightIndex = map.m_hSize[(k + 2) % 5];
 		vBotIndex = map.m_vSize[(k + 2) % 5];
 	}
-
-	encode_symbol(EOF_SYMBOL);
 	done_encoding();
 
 	size_out = sizeOut;
@@ -332,8 +334,8 @@ inline int Arcoder::input_bit(void)
 {
 	if (bits_to_go == 0)
 	{
-		buffer = *data_in;	// заполн€ем буфер битового ввода
-		data_in++;
+		buffer = *m_encodedData;	// заполн€ем буфер битового ввода
+		m_encodedData++;
 		sizeIn++;
 		if (buffer == EOF)	// входной поток сжатых данных исчерпан !!!
 		{
@@ -352,7 +354,7 @@ inline int Arcoder::input_bit(void)
 			}
 			bits_to_go = 1;
 		}
-		else bits_to_go = 8;
+		else bits_to_go = BUFFER_SIZE;
 	}
 	int t = buffer & 1;
 	buffer >>= 1;
@@ -415,22 +417,23 @@ int Arcoder::decode_symbol()
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-void Arcoder::decode(int8_t* in, int8_t* out, int size_in, int &size_out)
+void Arcoder::decode(int8_t* in, int* out, int size_in, int &size_out)
 {
-	data_in = in;
-	data_out = out;
+	m_encodedData = in;
+	m_decodedData = out;
 
 	int uSymbol;
 	start_model();
 	start_decoding();
+	int eofSymbol = m_model[m_currentModel].GetEof();
 
-	while ((uSymbol = decode_symbol()) != EOF_SYMBOL)
+	while ((uSymbol = decode_symbol()) != eofSymbol)
 	{
 		update_model(uSymbol);
 
-		int8_t symbol = conv.ConvertToSigned(uSymbol);
-		*data_out = symbol;
-		data_out++;
+		int symbol = conv.ConvertToSigned(uSymbol);
+		*m_decodedData = symbol;
+		m_decodedData++;
 		sizeOut++;
 	}
 
@@ -455,8 +458,8 @@ void Arcoder::decodeSubband(SubbandRect rect)
 			int uSymbol = decode_symbol();
 			update_model(uSymbol);
 
-			int8_t symbol = conv.ConvertToSigned(uSymbol);
-			data_out[index] = symbol;
+			int symbol = conv.ConvertToSigned(uSymbol);
+			m_decodedData[index] = symbol;
 			sizeOut++;
 		}
 
@@ -469,10 +472,10 @@ void Arcoder::decodeSubband(SubbandRect rect)
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-void Arcoder::mappedDecode(int8_t* in, int8_t* out, SubbandMap map, int &size_out)
+void Arcoder::mappedDecode(int8_t* in, int* out, SubbandMap map, int &size_out)
 {
-	data_in = in;
-	data_out = out;
+	m_encodedData = in;
+	m_decodedData = out;
 	start_model();
 	start_decoding();
 

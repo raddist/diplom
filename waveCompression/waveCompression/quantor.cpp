@@ -4,25 +4,32 @@
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-int8_t* Quantor::quantArray(double* input, int size)
+qMinCap Quantor::quantArray(double* input, int* output, int size, double i_q)
 {
-	int8_t* output = new int8_t[size];
-
 	for (int i = 0; i < size; ++i)
 	{
-		output[i] = static_cast<uint8_t>(floor(abs(input[i] / m_q)) *sgn(input[i]));
+		output[i] = static_cast<int>(floor(abs(input[i] / i_q)) *sgn(input[i]));
 	}
 
-	return output;
+	int min = 0;
+	int max = 0;
+	findMinMax(output, size, min, max);
+
+	qMinCap res;
+	res.q = i_q;
+	res.minValue = min;
+	res.arrCapacity = max - min + 1;
+
+	return res;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-void Quantor::deQuantArray(int8_t* input, double* output, int size)
+void Quantor::deQuantArray(int* input, double* output, int size, double i_q)
 {
 	for (int i = 0; i < size; ++i)
 	{
-		int8_t temp = static_cast<int8_t>(input[i]);
-		output[i] = m_q * (temp + sgn(temp) * y);
+		int temp = static_cast<int>(input[i]);
+		output[i] = i_q * (temp + sgn(temp) * y);
 	}
 }
 
@@ -64,24 +71,6 @@ void Quantor::myDeQuantArray(qPair q, int8_t* input, double* output, int size)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-void Quantor::findMinMax(double* input, int size, double &min, double &max)
-{
-	min = max = input[0];
-
-	for (int i = 1; i < size; ++i)
-	{
-		if (input[i] > max)
-		{
-			max = input[i];
-		}
-		if (input[i] < min)
-		{
-			min = input[i];
-		}
-	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename T>
 void Quantor::findMinMax(T* input, int size, T &min, T &max)
 {
@@ -98,14 +87,6 @@ void Quantor::findMinMax(T* input, int size, T &min, T &max)
 			min = input[i];
 		}
 	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-double Quantor::findQ(double i_min, double i_max)
-{
-	double q = 0;
-	q = maximum(abs(i_max) / 127.0, abs(i_min) / 128.0);
-	return q;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
