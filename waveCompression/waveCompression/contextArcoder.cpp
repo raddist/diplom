@@ -67,9 +67,9 @@ double ContextArcoder::calcP(int index, int *decoded_data, bool i_isOnTheBord)
 			int temp_index = index + (-1 + j)*imgWidth + (-1 + i);
 			switch (m_subbandType)
 			{
-			case 1: sum += m_context.maskH[3 * j + i] * abs(decoded_data[temp_index]);
+			case 1: sum += m_context.maskV[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
-			case 2: sum += m_context.maskV[3 * j + i] * abs(decoded_data[temp_index]);
+			case 2: sum += m_context.maskH[3 * j + i] * abs(decoded_data[temp_index]);
 				break;
 			case 3: sum += m_context.maskD[3 * j + i] * abs(decoded_data[temp_index]);
 				break;

@@ -29,7 +29,7 @@ for i = 2:numOfTests
     J = imread('test.bmp');
     figure();
     imshow(J);
-    res = myPSNR(I,J);
+    res = myPSNR(I,J)
     if (res == canPSNR)
         display(strcat('Test',32,num2str(i),32,'is successfull'));
     else

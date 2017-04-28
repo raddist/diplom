@@ -103,6 +103,15 @@ void BmpImage::SetDataFromDouble(double* input)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
+void BmpImage::SetDataFromInt(int* input)
+{
+	for (int i = 0; i < width * height; ++i)
+	{
+		data[i] = static_cast<unsigned char>(input[i]);
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 void BmpImage::intToHeader(int number, int positionInHeader)
 {
 	int* temp = (int*)&header[positionInHeader];

@@ -117,10 +117,10 @@ void SignContextArcoder::encodeSubband(SubbandRect rect)
 		encodeTopLeftSubband(rect);
 		break;
 	case 1:
-		encodeHorizontalSubband(rect);
-		break;
-	case 2:
 		encodeVerticalSubband(rect);
+		break;
+	case 2:	
+		encodeHorizontalSubband(rect);
 		break;
 	case 3:
 		encodeDiagonalSubband(rect);
@@ -144,10 +144,10 @@ void SignContextArcoder::encodeTopLeftSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::encodeHorizontalSubband(SubbandRect rect)
 {
-	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
-	for (int col = rect.left; col < rect.right; ++col)
+	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
+	for (int col = startLeftIndex; col < rect.right; ++col)
 	{
-		for (int row = startTopIndex; row < rect.bot; ++row)
+		for (int row = rect.top; row < rect.bot; ++row)
 		{
 			int index = row*imgWidth + col;
 
@@ -166,11 +166,11 @@ void SignContextArcoder::encodeHorizontalSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::encodeVerticalSubband(SubbandRect rect) 
 {
-	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
+	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
 
-	for (int row = rect.top; row < rect.bot; ++row)
+	for (int row = startTopIndex; row < rect.bot; ++row)
 	{
-		for (int col = startLeftIndex; col < rect.right; ++col)
+		for (int col = rect.left; col < rect.right; ++col)
 		{
 			int index = row*imgWidth + col;
 
@@ -278,10 +278,10 @@ void SignContextArcoder::decodeSubband(SubbandRect rect)
 		decodeTopLeftSubband(rect);
 		break;
 	case 1:
-		decodeHorizontalSubband(rect);
+		decodeVerticalSubband(rect);	
 		break;
 	case 2:
-		decodeVerticalSubband(rect);
+		decodeHorizontalSubband(rect);
 		break;
 	case 3:
 		decodeDiagonalSubband(rect);
@@ -305,10 +305,10 @@ void SignContextArcoder::decodeTopLeftSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::decodeHorizontalSubband(SubbandRect rect)
 {
-	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
-	for (int col = rect.left; col < rect.right; ++col)
+	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
+	for (int col = startLeftIndex; col < rect.right; ++col)
 	{
-		for (int row = startTopIndex; row < rect.bot; ++row)
+		for (int row = rect.top; row < rect.bot; ++row)
 		{
 			int index = row*imgWidth + col;
 
@@ -327,11 +327,11 @@ void SignContextArcoder::decodeHorizontalSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::decodeVerticalSubband(SubbandRect rect)
 {
-	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
+	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
 
-	for (int row = rect.top; row < rect.bot; ++row)
+	for (int row = startTopIndex; row < rect.bot; ++row)
 	{
-		for (int col = startLeftIndex; col < rect.right; ++col)
+		for (int col = rect.left; col < rect.right; ++col)
 		{
 			int index = row*imgWidth + col;
 
@@ -423,13 +423,13 @@ int SignContextArcoder::FindSignModel(int i_index, int *decoded_data)
 	
 	switch (m_subbandType)
 	{
-	case 2:	// vertical
+	case 1:	// vertical
 		sum = -0.5 * (decoded_data[i_index - 2 * imgWidth - 1] + decoded_data[i_index - 2 * imgWidth + 1] +
 			decoded_data[i_index - imgWidth - 1] + decoded_data[i_index - imgWidth + 1]) +
 			(decoded_data[i_index - imgWidth] + decoded_data[i_index - 2 * imgWidth]);
 		break;
 
-	case 1:	// horizontal
+	case 2:	// horizontal
 		sum = -0.5 * (decoded_data[i_index - imgWidth - 2] + decoded_data[i_index -  imgWidth - 1] +
 			decoded_data[i_index + imgWidth - 2] + decoded_data[i_index + imgWidth - 1]) +
 			(decoded_data[i_index -2] + decoded_data[i_index - 1]);

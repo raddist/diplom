@@ -48,6 +48,7 @@ public:
 	double* GetDoubleData();
 
 	void SetDataFromDouble(double* input);
+	void SetDataFromInt(int* input);
 
 private:
 	void intToHeader(int number, int positionInHeader);
