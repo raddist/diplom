@@ -24,6 +24,12 @@ typedef struct qMinCap {
 	double q;
 	int minValue;
 	int arrCapacity;
+
+	int mainMin;
+	int mainCapacity;
+
+	int extraMin;
+	int extraCapacity;
 } qMinCap;
 
 typedef struct {
