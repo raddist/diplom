@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <cstdint>
+#include <vector>
 
 #define y 0.375
 
@@ -19,6 +20,35 @@ template <typename T3> T3 abs(T3 value)
 {
 	return (value > 0) ? value : -value;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+class SubbandMap
+{
+public:
+	SubbandMap(int hSize, int vSize, int i_steps)
+	{
+		int levels = i_steps + 1;
+
+		while (levels--)
+		{
+			m_hSize.insert(m_hSize.begin(), hSize);
+			m_vSize.insert(m_vSize.begin(), vSize);
+
+			hSize = (hSize + 1) / 2;
+			vSize = (vSize + 1) / 2;
+		}
+		steps = i_steps;
+	}
+
+	~SubbandMap()
+	{};
+
+public:
+
+	std::vector<int> m_hSize;
+	std::vector<int> m_vSize;
+	int steps;
+};
 
 typedef struct qMinCap {
 	double q;
@@ -48,6 +78,9 @@ public:
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	qMinCap quantArray(double* input, int* output, int size, double i_q);
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	qMinCap quantArrayByMap(double* input, int* output, int size, double i_q, SubbandMap i_map);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	void deQuantArray(int* input, double* output, int size, double i_q);

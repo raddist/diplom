@@ -24,6 +24,63 @@ qMinCap Quantor::quantArray(double* input, int* output, int size, double i_q)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
+qMinCap Quantor::quantArrayByMap(double* input, int* output, int size, double i_q, SubbandMap i_map)
+{
+	qMinCap res = quantArray(input, output, size, i_q);
+
+	// fill other res states
+	int mainBot = i_map.m_vSize[0];
+	int mainRight = i_map.m_hSize[0];
+
+	int height = i_map.m_vSize[i_map.m_vSize.size() - 1];
+	int width = i_map.m_hSize[i_map.m_vSize.size() - 1];
+
+	int mainMin = output[0];
+	int mainMax = output[0];
+	int extraMin = output[mainRight];
+	int extraMax = output[mainRight];
+	int index = 0;
+
+	for (int col = 0; col < width; ++col)
+	{
+		for (int row = 0; row < height; ++row)
+		{
+			index = row * width + col;
+			if (col < mainRight && row < mainBot)
+			{
+				if (output[index] > mainMax)
+				{
+					mainMax = output[index];
+				}
+				if (output[index] < mainMin)
+				{
+					mainMin = output[index];
+				}
+			}
+			else
+			{
+				if (output[index] > extraMax)
+				{
+					extraMax = output[index];
+				}
+				if (output[index] < extraMin)
+				{
+					extraMin = output[index];
+				}
+			}
+		}
+	}
+
+	res.extraMin = extraMin;
+	res.extraCapacity = extraMax - extraMin + 1;
+
+	res.mainMin = mainMin;
+	res.mainCapacity = mainMax - mainMin + 1;
+
+	return res;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 void Quantor::deQuantArray(int* input, double* output, int size, double i_q)
 {
 	for (int i = 0; i < size; ++i)

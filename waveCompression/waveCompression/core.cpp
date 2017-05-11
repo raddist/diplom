@@ -67,6 +67,7 @@ private:
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
+		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 
 		// using wavelet
 		double* transformed = new double[img_size];
@@ -74,7 +75,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, i_q);
+		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, i_q, map);
 
 		// preapare for encode/decode
 		double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
@@ -91,8 +92,6 @@ private:
 		context_2.maskD = ctempD;
 		context_2.maskH = ctempH;
 		context_2.maskV = ctempV;
-
-		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 		///////////////////////////////////////////////////////////////////////////////////////
 
 		// encode 1
@@ -194,6 +193,11 @@ private:
 		FILE* sc_temp = fopen("sc_encoded.bin", "w+b");
 		fwrite(encoded_5, 1, out_size_5, sc_temp);
 		fclose(sc_temp);
+
+		// write model data
+		FILE* model_file = fopen("model.bin", "w+b");
+		Sarcoder.exportModelInformation(model_file);
+		fclose(model_file);
 
 		// realloc
 		delete[] transformed;

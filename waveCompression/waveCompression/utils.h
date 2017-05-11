@@ -137,3 +137,17 @@ void deQuantilization(int* i_input, double* o_output, int i_imgSize, double i_q 
 	Quantor quant;
 	quant.deQuantArray(i_input, o_output, i_imgSize, i_q);
 }
+
+// @brief
+qMinCap quantilizationByMap(double* i_input, int* o_output, int i_imgSize, double i_q, SubbandMap i_map)
+{
+	Quantor quant;
+	return quant.quantArrayByMap(i_input, o_output, i_imgSize, i_q, i_map);
+}
+
+// @brief
+void deQuantilizationByMap(int* i_input, double* o_output, int i_imgSize, double i_q, SubbandMap i_map)
+{
+	Quantor quant;
+	quant.deQuantArray(i_input, o_output, i_imgSize, i_q);
+}

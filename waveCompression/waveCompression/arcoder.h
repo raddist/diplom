@@ -22,35 +22,6 @@ typedef unsigned int uint;
 #define BUFFER_SIZE					8
 
 /////////////////////////////////////////////////////////////////////////////////////////
-class SubbandMap
-{
-public:
-	SubbandMap(int hSize, int vSize, int i_steps)
-	{
-		int levels = i_steps + 1;
-
-		while (levels--)
-		{
-			m_hSize.insert(m_hSize.begin(), hSize);
-			m_vSize.insert(m_vSize.begin(), vSize);
-
-			hSize = (hSize + 1) / 2;
-			vSize = (vSize + 1) / 2;
-		}
-		steps = i_steps;
-	}
-
-	~SubbandMap()
-	{};
-
-public:
-
-	std::vector<int> m_hSize;
-	std::vector<int> m_vSize;
-	int steps;
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////
 class SubbandRect
 {
 public:
@@ -102,6 +73,8 @@ public:
 	}
 
 	int GetEof();
+	int GetFreqSize() { return m_numOfSymbols + 1; }
+	unsigned int* GetFreqData() { return cum_freq; }
 
 private:
 	int m_numOfChars;
@@ -148,6 +121,9 @@ public:
 	// @brief обновление массива частот
 	// @param symbol - in, поступивший символ
 	inline virtual void update_model(int symbol);
+
+	// @brief export model info to file
+	void exportModelInformation(FILE* i_file);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
