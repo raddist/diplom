@@ -1,9 +1,9 @@
 function showQuantedArr()
 
-quant = 25;
+quant = 28;
 
 % canonical test
-command = strcat('waveCompression.exe 1 lena.bmp test.bmp',32,num2str(quant));
+command = strcat('waveCompression.exe 1 boat.bmp test.bmp',32,num2str(quant));
 system(command);
 
 [arr height width] = loadArrFromFile('quanted.bin');

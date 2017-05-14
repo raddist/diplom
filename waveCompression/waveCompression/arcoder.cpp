@@ -127,7 +127,7 @@ inline void Arcoder::update_model(int symbol)
 
 	// update previous symbol
 
-	if (m_numOfModelsNeeded != 1)
+	if (m_numOfModelsNeeded != 1 && m_subbandType == 0)
 	{
 		m_currentModel = symbol;
 	}

@@ -166,7 +166,7 @@ private:
 		img.WriteBmp(out);
 
 		// tests
-		compareArraysThroughMap(quanted, decoded_5, img_size, map);
+		compareArraysThroughMap(quanted, decoded_2, img_size, map);
 
 		// write files
 		// write encoded data in file
@@ -228,7 +228,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 27);
+		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
 
 		// encode
 		int8_t* encoded = new int8_t[img_size];
@@ -243,7 +243,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 27);
+		deQuantilization(decoded, deQuanted, img_size, 28);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -285,7 +285,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 27);
+		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
 
 		// encode
 		int8_t* encoded = new int8_t[img_size];
@@ -301,7 +301,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 27);
+		deQuantilization(decoded, deQuanted, img_size, 28);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -333,7 +333,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 27);
+		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
 
 		// encode
 		double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
@@ -355,7 +355,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 27);
+		deQuantilization(decoded, deQuanted, img_size, 28);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -388,7 +388,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 27);
+		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
 
 		// encode
 		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
@@ -411,7 +411,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 27);
+		deQuantilization(decoded, deQuanted, img_size, 28);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -444,7 +444,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 27);
+		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
 
 		// encode
 		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
@@ -468,7 +468,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 27);
+		deQuantilization(decoded, deQuanted, img_size, 28);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];

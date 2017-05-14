@@ -73,6 +73,5 @@ public:
 protected:
 	Context3x3 m_context;
 	Limits limits;
-	int m_subbandType;
 	int m_curSymbolIndex;
 };

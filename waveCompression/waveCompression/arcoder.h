@@ -195,4 +195,6 @@ protected:
 	Models m_model;					//< array of models for encoding/decoding symbols
 	int m_numOfModelsNeeded;
 	Converter conv;
+
+	int m_subbandType = 0;
 };

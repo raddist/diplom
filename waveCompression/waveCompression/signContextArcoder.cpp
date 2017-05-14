@@ -23,10 +23,10 @@ SignContextArcoder::SignContextArcoder(qMinCap qStruct,
 	conv.Initialize();
 
 	// add limits for sign encoding
-	m_signLimits.push_back(-2);
-	m_signLimits.push_back(-0.1);
-	m_signLimits.push_back(0.1);
-	m_signLimits.push_back(2);
+	m_signLimits.push_back(-15);
+	m_signLimits.push_back(-5);
+	m_signLimits.push_back(5);
+	m_signLimits.push_back(15);
 
 	if (i__isContextForSignNeeded)
 	{
@@ -445,19 +445,19 @@ int SignContextArcoder::FindSignModel(int i_index, int *decoded_data)
 			decoded_data[i_index - 2 * imgWidth + 1] + decoded_data[i_index - imgWidth]) -
 			1.0 * (decoded_data[i_index - imgWidth + 2]) +
 			(decoded_data[i_index - 2 * imgWidth - 2] + decoded_data[i_index - imgWidth - 1]);
-		sum = (leftSum > rightSum) ? leftSum : rightSum;
+		sum = (abs(leftSum) > abs(rightSum)) ? leftSum : rightSum;
 		break;
 	}
 	}
 
-	for (int i = 0; i < static_cast<int>(m_signLimits.size() - 1); ++i)
+	for (int i = 0; i < static_cast<int>(m_signLimits.size()); ++i)
 	{
 		if (sum < m_signLimits.at(i))
 		{
 			return i + 1;
 		}
 	}
-	return limits.size() + 1;
+	return m_signLimits.size() + 1;
 }
 
 

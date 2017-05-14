@@ -7,15 +7,13 @@
 #pragma warning(disable: 4996)
 
 ///////////////////////////////////////////////////////////////////////
-ContextArcoder::ContextArcoder():
-	m_subbandType(0)
+ContextArcoder::ContextArcoder()
 {
 }
 
 ///////////////////////////////////////////////////////////////////////
 ContextArcoder::ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context) :
-	m_context(i_context),
-	m_subbandType(0)
+	m_context(i_context)
 {
 	limits.push_back(0.2);
 	limits.push_back(1);
@@ -34,8 +32,7 @@ ContextArcoder::ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context) :
 ContextArcoder::ContextArcoder(qMinCap i_qMinCap,
 								Context3x3 i_context,
 								Limits i_limits) :
-	m_context(i_context),
-	m_subbandType(0)
+	m_context(i_context)
 {
 	limits = i_limits;
 
@@ -82,7 +79,7 @@ double ContextArcoder::calcP(int index, int *decoded_data, bool i_isOnTheBord)
 ///////////////////////////////////////////////////////////////////////
 int ContextArcoder::findModelByP(double p)
 {
-	for (int i = 0; i < static_cast<int>(limits.size() - 1); ++i)
+	for (int i = 0; i < static_cast<int>(limits.size()); ++i)
 	{
 		if (p < limits.at(i))
 		{
@@ -142,11 +139,12 @@ void ContextArcoder::encode(int* in, int8_t* out, SubbandMap map, int size_in, i
 	reset_model();
 
 	// encode top row and left col
+	m_subbandType = 1;
 	encodeTopRow(0, hLeftIndex);
-	reset_model();
 
+	m_subbandType = 2;
 	encodeLeftColumn(0, vTopIndex);
-	reset_model();
+	//reset_model();
 
 	// read other data
 	for (int k = 0; k < map.steps; ++k)
@@ -230,6 +228,7 @@ void ContextArcoder::encodeLeftColumn(int i_col, int i_startIndex)
 	{
 		int index = row * imgWidth + i_col;
 		basicEncode(index);
+		m_currentModel = 0;
 	}
 }
 
@@ -286,11 +285,12 @@ void ContextArcoder::decode(int8_t* in, int* out, SubbandMap map, int &size_out)
 	reset_model();
 
 	// decode top row and left col
+	m_subbandType = 1;
 	decodeTopRow(0, hLeftIndex);
-	reset_model();
 
+	m_subbandType = 2;
 	decodeLeftColumn(0, vTopIndex);
-	reset_model();
+	//reset_model();
 
 	// read other data
 	for (int k = 0; k < map.steps; ++k)
@@ -364,7 +364,6 @@ void ContextArcoder::decodeTopRow(int i_row, int i_startIndex)
 	}
 }
 
-// TODO change row and col logic
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::decodeLeftColumn(int i_col, int i_startIndex)
 {
@@ -372,6 +371,7 @@ void ContextArcoder::decodeLeftColumn(int i_col, int i_startIndex)
 	{
 		int index = row * imgWidth + i_col;
 		basicDecode(index);
+		m_currentModel = 0;
 	}
 }
 
