@@ -8,6 +8,8 @@ public:
 
 	SignContextArcoder(qMinCap qStruct, Context3x3 i_context, bool i__isContextForSignNeeded = false);
 
+	virtual void reset_model() override;
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////
 	///// encode

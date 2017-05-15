@@ -166,7 +166,7 @@ private:
 		img.WriteBmp(out);
 
 		// tests
-		compareArraysThroughMap(quanted, decoded_2, img_size, map);
+		compareArraysThroughMap(quanted, decoded_4, img_size, map);
 
 		// write files
 		// write encoded data in file
@@ -326,6 +326,7 @@ private:
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
+		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 
 		// using wavelet
 		double* transformed = new double[img_size];
@@ -333,7 +334,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
+		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, 28, map);
 
 		// encode
 		double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
@@ -343,7 +344,6 @@ private:
 		context.maskH = ctemp1;
 		context.maskV = ctemp1;
 		ContextArcoder Carcoder(qStruct, context);
-		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 		int8_t* encoded = new int8_t[img_size];
 		int c_out_size = 0;
 		Carcoder.encode(quanted, encoded, map, img_size, c_out_size);
@@ -381,6 +381,7 @@ private:
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
+		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 
 		// using wavelet
 		double* transformed = new double[img_size];
@@ -388,7 +389,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
+		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, 28, map);
 
 		// encode
 		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
@@ -399,7 +400,6 @@ private:
 		context.maskH = ctempH;
 		context.maskV = ctempV;
 		SignContextArcoder Carcoder(qStruct, context);
-		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 		int8_t* encoded = new int8_t[img_size];
 		int c_out_size = 0;
 		Carcoder.encode(quanted, encoded, map, img_size, c_out_size);
@@ -437,6 +437,7 @@ private:
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
+		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 
 		// using wavelet
 		double* transformed = new double[img_size];
@@ -444,7 +445,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
+		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, 28, map);
 
 		// encode
 		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
@@ -456,7 +457,6 @@ private:
 		context.maskV = ctempV;
 
 		SignContextArcoder Carcoder(qStruct, context, true);
-		SubbandMap map(img.GetWidth(), img.GetHeight(), 4);
 		int8_t* encoded = new int8_t[img_size];
 		int c_out_size = 0;
 		Carcoder.encode(quanted, encoded, map, img_size, c_out_size);

@@ -13,42 +13,53 @@ ContextArcoder::ContextArcoder()
 
 ///////////////////////////////////////////////////////////////////////
 ContextArcoder::ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context) :
+	m_qStruct(i_qMinCap),
 	m_context(i_context)
 {
 	limits.push_back(0.2);
 	limits.push_back(1);
 	limits.push_back(10);
-
-	m_numOfModelsNeeded = i_qMinCap.arrCapacity;
-
-	for (int i = 0; i < m_numOfModelsNeeded; ++i)
-	{
-		m_model.emplace_back(i_qMinCap.arrCapacity);
-	}
-	conv.Initialize(i_qMinCap.arrCapacity, i_qMinCap.minValue);
 }
 
 ///////////////////////////////////////////////////////////////////////
 ContextArcoder::ContextArcoder(qMinCap i_qMinCap,
 								Context3x3 i_context,
 								Limits i_limits) :
-	m_context(i_context)
+	m_qStruct(i_qMinCap),
+	m_context(i_context),
+	limits(i_limits)
 {
-	limits = i_limits;
+}
 
-	m_numOfModelsNeeded = i_qMinCap.arrCapacity;
+///////////////////////////////////////////////////////////////////////
+void ContextArcoder::initialize_model(void)
+{
+	// first group of models for right top subband
+	m_numOfModelsNeeded = m_qStruct.mainCapacity;
+	m_model.clear();
 
 	for (int i = 0; i < m_numOfModelsNeeded; ++i)
 	{
-		m_model.emplace_back(i_qMinCap.arrCapacity);
+		m_model.emplace_back(m_qStruct.mainCapacity);
 	}
-	conv.Initialize(i_qMinCap.arrCapacity, i_qMinCap.minValue);
+	conv.Initialize(m_qStruct.mainCapacity, m_qStruct.mainMin);
+
+	start_model();
 }
 
 ///////////////////////////////////////////////////////////////////////
 void ContextArcoder::reset_model(void)
 {
-	// just reset models
+	// reset models to work with extra subbands
+	m_model.clear();
+	m_numOfModelsNeeded = limits.size() + 1;
+
+	for (int i = 0; i < m_numOfModelsNeeded; ++i)
+	{
+		m_model.emplace_back(m_qStruct.extraCapacity);
+	}
+	conv.Initialize(m_qStruct.extraCapacity, m_qStruct.extraMin);
+
 	start_model();
 }
 
@@ -130,7 +141,7 @@ void ContextArcoder::encode(int* in, int8_t* out, SubbandMap map, int size_in, i
 	imgWidth = map.m_hSize[map.steps];
 	imgHeight = map.m_vSize[map.steps];
 
-	start_model();
+	initialize_model();
 	start_encoding();
 
 	// read minimal left top subband
@@ -278,7 +289,7 @@ void ContextArcoder::decode(int8_t* in, int* out, SubbandMap map, int &size_out)
 	imgWidth = map.m_hSize[map.steps];
 	imgHeight = map.m_vSize[map.steps];
 
-	start_model();
+	initialize_model();
 	start_decoding();
 
 	// read minimal left top subband

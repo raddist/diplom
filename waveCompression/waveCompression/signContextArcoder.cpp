@@ -4,23 +4,24 @@
 SignContextArcoder::SignContextArcoder(qMinCap qStruct,
 										Context3x3 i_context, 
 										bool i__isContextForSignNeeded):
+	ContextArcoder(qStruct, i_context),
 	m_isContextForSignNeeded(i__isContextForSignNeeded)
 {
-	m_context = i_context;
-	m_subbandType = 0;
+}
 
-	limits.push_back(0.2);
-	limits.push_back(1);
-	limits.push_back(10);
+void SignContextArcoder::reset_model()
+{
+	// reset models to work with extra subbands
+	m_model.clear();
+	m_numOfModelsNeeded = limits.size() + 1;
 
-	m_numOfModelsNeeded = qStruct.arrCapacity;
-
-	int modelSize = (abs(qStruct.minValue) > qStruct.arrCapacity + qStruct.minValue) ? abs(qStruct.minValue) + 1 : qStruct.arrCapacity + qStruct.minValue;
+	int modelSize = (abs(m_qStruct.extraMin) > m_qStruct.extraCapacity + m_qStruct.extraMin) ? 
+		abs(m_qStruct.extraMin) + 1 : m_qStruct.arrCapacity + m_qStruct.extraMin + 1;
 	for (int i = 0; i < m_numOfModelsNeeded; ++i)
 	{
 		m_model.emplace_back(modelSize);
 	}
-	conv.Initialize();
+	conv.Initialize(m_qStruct.extraCapacity, m_qStruct.extraMin);
 
 	// add limits for sign encoding
 	m_signLimits.push_back(-15);
@@ -28,7 +29,7 @@ SignContextArcoder::SignContextArcoder(qMinCap qStruct,
 	m_signLimits.push_back(5);
 	m_signLimits.push_back(15);
 
-	if (i__isContextForSignNeeded)
+	if (m_isContextForSignNeeded)
 	{
 		m_numOfModelsNeeded += m_signLimits.size() + 1;
 		for (int i = 0; i < m_signLimits.size() + 1; ++i)
@@ -43,33 +44,42 @@ SignContextArcoder::SignContextArcoder(qMinCap qStruct,
 	// add new sign model
 	m_numOfModelsNeeded++;
 	m_model.emplace_back(2);
+
+	start_model();
 }
 
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::basicEncode(int i_index)
 {
-	int symbol = m_decodedData[i_index];
-
-	Arcoder::encode_symbol(abs(symbol));
-	update_model(abs(symbol));
-	int storageCurModelNumber = m_currentModel;
-
-	// encode sign bit
-	m_currentModel = m_numOfModelsNeeded - 1;
-
-	if (symbol > 0)
+	if (m_subbandType == 0)
 	{
-		Arcoder::encode_symbol(1);
-		update_model(1);
+		ContextArcoder::basicEncode(i_index);
 	}
-	else if (symbol < 0)
+	else
 	{
-		Arcoder::encode_symbol(0);
-		update_model(0);
-	}
+		int symbol = m_decodedData[i_index];
 
-	// back to symbol model
-	m_currentModel = storageCurModelNumber;
+		Arcoder::encode_symbol(abs(symbol));
+		update_model(abs(symbol));
+		int storageCurModelNumber = m_currentModel;
+
+		// encode sign bit
+		m_currentModel = m_numOfModelsNeeded - 1;
+
+		if (symbol > 0)
+		{
+			Arcoder::encode_symbol(1);
+			update_model(1);
+		}
+		else if (symbol < 0)
+		{
+			Arcoder::encode_symbol(0);
+			update_model(0);
+		}
+
+		// back to symbol model
+		m_currentModel = storageCurModelNumber;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -209,27 +219,34 @@ void SignContextArcoder::encodeDiagonalSubband(SubbandRect rect)
 
 void SignContextArcoder::basicDecode(int i_index)
 {
-	int uSymbol = Arcoder::decode_symbol();
-	update_model(uSymbol);
-	int storageCurModelNumber = m_currentModel;
-
-	if (uSymbol == 0)
+	if (m_subbandType == 0)
 	{
-		m_decodedData[i_index] = 0;
+		ContextArcoder::basicDecode(i_index);
 	}
 	else
 	{
-		// decode sign bit
-		m_currentModel = m_numOfModelsNeeded - 1;
+		int uSymbol = Arcoder::decode_symbol();
+		update_model(uSymbol);
+		int storageCurModelNumber = m_currentModel;
 
-		int signBit = Arcoder::decode_symbol();
-		update_model(signBit);
+		if (uSymbol == 0)
+		{
+			m_decodedData[i_index] = 0;
+		}
+		else
+		{
+			// decode sign bit
+			m_currentModel = m_numOfModelsNeeded - 1;
 
-		m_currentModel = storageCurModelNumber;
-		m_decodedData[i_index] = (signBit == 1) ? uSymbol : -uSymbol;
+			int signBit = Arcoder::decode_symbol();
+			update_model(signBit);
+
+			m_currentModel = storageCurModelNumber;
+			m_decodedData[i_index] = (signBit == 1) ? uSymbol : -uSymbol;
+		}
+
+		sizeOut++;
 	}
-
-	sizeOut++;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -411,5 +428,3 @@ int SignContextArcoder::FindSignModel(int i_index, int *decoded_data)
 	}
 	return m_signLimits.size() + 1;
 }
-
-

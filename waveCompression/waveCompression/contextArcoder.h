@@ -23,7 +23,9 @@ public:
 
 	ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context, Limits i_limits);
 
-	void reset_model();
+	virtual void initialize_model();
+
+	virtual void reset_model();
 
 	double calcP(int index, int* decoded_data, bool i_isOnTheBord);
 
@@ -72,6 +74,7 @@ public:
 
 protected:
 	Context3x3 m_context;
+	qMinCap	m_qStruct;
 	Limits limits;
 	int m_curSymbolIndex;
 };
