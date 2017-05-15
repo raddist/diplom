@@ -144,7 +144,7 @@ void SignContextArcoder::encodeTopLeftSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::encodeHorizontalSubband(SubbandRect rect)
 {
-	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
+	int startLeftIndex = 2;
 	for (int col = startLeftIndex; col < rect.right; ++col)
 	{
 		for (int row = rect.top; row < rect.bot; ++row)
@@ -166,7 +166,7 @@ void SignContextArcoder::encodeHorizontalSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::encodeVerticalSubband(SubbandRect rect) 
 {
-	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
+	int startTopIndex = 2;
 
 	for (int row = startTopIndex; row < rect.bot; ++row)
 	{
@@ -305,7 +305,7 @@ void SignContextArcoder::decodeTopLeftSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::decodeHorizontalSubband(SubbandRect rect)
 {
-	int startLeftIndex = m_isContextForSignNeeded ? 2 : 1;
+	int startLeftIndex = 2;
 	for (int col = startLeftIndex; col < rect.right; ++col)
 	{
 		for (int row = rect.top; row < rect.bot; ++row)
@@ -327,7 +327,7 @@ void SignContextArcoder::decodeHorizontalSubband(SubbandRect rect)
 ///////////////////////////////////////////////////////////////////////
 void SignContextArcoder::decodeVerticalSubband(SubbandRect rect)
 {
-	int startTopIndex = m_isContextForSignNeeded ? 2 : 1;
+	int startTopIndex = 2;
 
 	for (int row = startTopIndex; row < rect.bot; ++row)
 	{
@@ -365,54 +365,6 @@ void SignContextArcoder::decodeDiagonalSubband(SubbandRect rect)
 				decodeSymbolByContext(index, true);
 			}
 		}
-	}
-}
-
-///////////////////////////////////////////////////////////////////////
-void SignContextArcoder::encodeTopRow(int i_row, int i_startIndex)
-{
-	ContextArcoder::encodeTopRow(0, i_startIndex);
-
-	if (m_isContextForSignNeeded)
-	{
-		// encode one more top row
-		ContextArcoder::encodeTopRow(1, i_startIndex);
-	}
-}
-
-///////////////////////////////////////////////////////////////////////
-void SignContextArcoder::encodeLeftColumn(int i_col, int i_startIndex)
-{
-	ContextArcoder::encodeLeftColumn(0, i_startIndex);
-
-	if (m_isContextForSignNeeded)
-	{
-		// encode one more top row
-		ContextArcoder::encodeLeftColumn(1, i_startIndex);
-	}
-}
-
-///////////////////////////////////////////////////////////////////////
-void SignContextArcoder::decodeTopRow(int i_row, int i_startIndex)
-{
-	ContextArcoder::decodeTopRow(0, i_startIndex);
-
-	if (m_isContextForSignNeeded)
-	{
-		// decode one more top row
-		ContextArcoder::decodeTopRow(1, i_startIndex);
-	}
-}
-
-///////////////////////////////////////////////////////////////////////
-void SignContextArcoder::decodeLeftColumn(int i_col, int i_startIndex)
-{
-	ContextArcoder::decodeLeftColumn(0, i_startIndex);
-
-	if (m_isContextForSignNeeded)
-	{
-		// decode one more top row
-		ContextArcoder::decodeLeftColumn(1, i_startIndex);
 	}
 }
 

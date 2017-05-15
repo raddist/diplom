@@ -141,9 +141,11 @@ void ContextArcoder::encode(int* in, int8_t* out, SubbandMap map, int size_in, i
 	// encode top row and left col
 	m_subbandType = 1;
 	encodeTopRow(0, hLeftIndex);
+	encodeTopRow(1, hLeftIndex);
 
 	m_subbandType = 2;
 	encodeLeftColumn(0, vTopIndex);
+	encodeLeftColumn(1, vTopIndex);
 	//reset_model();
 
 	// read other data
@@ -196,7 +198,7 @@ void ContextArcoder::encodeSubband(SubbandRect rect)
 			{
 				basicEncode(index);
 			}
-			else if (j != 0 && i != 0)
+			else if (j > 1 && i > 1)
 			{
 				if (j != rect.bot-1 && i != horizontalTo)
 				{
@@ -287,9 +289,11 @@ void ContextArcoder::decode(int8_t* in, int* out, SubbandMap map, int &size_out)
 	// decode top row and left col
 	m_subbandType = 1;
 	decodeTopRow(0, hLeftIndex);
+	decodeTopRow(1, hLeftIndex);
 
 	m_subbandType = 2;
 	decodeLeftColumn(0, vTopIndex);
+	decodeLeftColumn(1, vTopIndex);
 	//reset_model();
 
 	// read other data
@@ -339,7 +343,7 @@ void ContextArcoder::decodeSubband(SubbandRect rect)
 			{
 				basicDecode(index);
 			}
-			else if (j != 0 && i != 0)
+			else if (j > 1 && i > 1)
 			{
 				if (j != rect.bot - 1 && i != horizontalTo)
 				{

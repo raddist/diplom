@@ -18,10 +18,6 @@ public:
 
 	virtual void encodeSymbolByContext(int index, bool i_isOnTheBord = false);
 
-	virtual void encodeTopRow(int i_row, int i_startIndex);
-
-	virtual void encodeLeftColumn(int i_col, int i_startIndex);
-
 	virtual void encodeSubband(SubbandRect rect);
 
 	void encodeTopLeftSubband(SubbandRect rect);
@@ -41,10 +37,6 @@ public:
 	virtual void basicDecode(int i_index);
 
 	virtual void decodeSymbolByContext(int index, bool i_isOnTheBord = false);
-	// @brief
-	virtual void decodeTopRow(int i_row, int i_startIndex) override;
-
-	virtual void decodeLeftColumn(int i_col, int i_startIndex);
 
 	virtual void decodeSubband(SubbandRect rect);
 

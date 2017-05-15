@@ -1,2 +1,5 @@
-﻿  core.cpp
+﻿  signContextArcoder.cpp
+c:\users\andrey\desktop\diplom\git\wavecompression\wavecompression\signcontextarcoder.cpp(34): warning C4018: <: несоответствие типов со знаком и без знака
+  contextArcoder.cpp
+  Создание кода...
   waveCompression.vcxproj -> C:\Users\Andrey\Desktop\Diplom\git\waveCompression\Debug\waveCompression.exe
