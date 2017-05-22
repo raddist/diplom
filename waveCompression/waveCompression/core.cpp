@@ -4,6 +4,9 @@
 #pragma warning(disable: 4996)
 FILE *in, *out;
 
+#define WAVE_STEPS	4
+#define ETALON_Q	20		// my research was provided for this value
+
 
 
 class TestManager
@@ -18,39 +21,50 @@ public:
 
 	}
 
-	void DoTest(int i_test, int i_q = 1, int i_steps = 4)
+	void processLimits(double& l1, double& l2, double& l3, double i_q)
 	{
+		double shift = ETALON_Q / i_q;
+		l1 *= shift;
+		l2 *= shift;
+		l3 *= shift;
+	}
+
+	void DoTest(int i_test, double i_q = 1.0,
+				double l1 = 0.1, double l2 = 1.1, double l3 = 3.5,
+				double s1 = -0.6, double s2 = 0.6)
+	{
+		//processLimits(l1, l2, l3, i_q);
 		switch (i_test)
 		{
 		case 0:
 		{
 			//do all tests
-			test0(i_q, i_steps);
+			test0(i_q, WAVE_STEPS, l1, l2, l3, s1, s2);
 			break;
 		}
 		case 1:
 		{
-			test1(i_q, i_steps);
+			test1(i_q, WAVE_STEPS);
 			break;
 		}
 		case 2:
 		{
-			test2(i_q, i_steps);
+			test2(i_q, WAVE_STEPS);
 			break;
 		}
 		case 3:
 		{
-			test3(i_q, i_steps);
+			test3(i_q, WAVE_STEPS, l1, l2, l3);
 			break;
 		}
 		case 4:
 		{
-			test4(i_q, i_steps);
+			test4(i_q, WAVE_STEPS);
 			break;
 		}
 		case 5:
 		{
-			test5(i_q, i_steps);
+			test5(i_q, WAVE_STEPS, l1, l2, l3, s1, s2);
 			break;
 		}
 		}
@@ -63,7 +77,8 @@ public:
 private:
 
 	// @brief compare all arcoders
-	void test0(double i_q, int steps)
+	void test0(double i_q, int steps, double l1, double l2, double l3,
+				double s1, double s2)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -78,6 +93,15 @@ private:
 		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, i_q, map);
 
 		// preapare for encode/decode
+		Limits limits;
+		limits.push_back(l1);
+		limits.push_back(l2);
+		limits.push_back(l3);
+
+		Limits signLimits;
+		signLimits.push_back(s1);
+		signLimits.push_back(s2);
+
 		double ctemp[] = {	0.2, 0.4, 0.0 ,  
 							0.0, 0.0, 0.0 ,  
 							0.0, 0.0, 0.0 };
@@ -129,7 +153,7 @@ private:
 		///////////////////////////////////////////////////////////////////////////////////////
 
 		// encode 3
-		ContextArcoder Carcoder(qStruct, context);
+		ContextArcoder Carcoder(qStruct, context, limits);
 		int8_t* encoded_3 = new int8_t[img_size];
 		int out_size_3 = 0;
 		Carcoder.encode(quanted, encoded_3, map, img_size, out_size_3);
@@ -141,7 +165,7 @@ private:
 		///////////////////////////////////////////////////////////////////////////////////////
 
 		// encode 4
-		SignContextArcoder sCarcoder(qStruct, context_2);
+		SignContextArcoder sCarcoder(qStruct, context_2, limits, signLimits);
 		int8_t* encoded_4 = new int8_t[img_size];
 		int out_size_4 = 0;
 		sCarcoder.encode(quanted, encoded_4, map, img_size, out_size_4);
@@ -153,7 +177,7 @@ private:
 		///////////////////////////////////////////////////////////////////////////////////////
 
 		// encode 5
-		SignContextArcoder Sarcoder(qStruct, context_2, true);
+		SignContextArcoder Sarcoder(qStruct, context_2, limits, signLimits, true);
 		int8_t* encoded_5 = new int8_t[img_size];
 		int out_size_5 = 0;
 		Sarcoder.encode(quanted, encoded_5, map, img_size, out_size_5);
@@ -332,7 +356,7 @@ private:
 	}
 
 	// @brief test context enocode/decode
-	void test3(double i_q, int steps)
+	void test3(double i_q, int steps, double l1, double l2, double l3)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -353,7 +377,11 @@ private:
 		context.maskD = ctemp;
 		context.maskH = ctemp1;
 		context.maskV = ctemp1;
-		ContextArcoder Carcoder(qStruct, context);
+		Limits limits;
+		limits.push_back(l1);
+		limits.push_back(l2);
+		limits.push_back(l3);
+		ContextArcoder Carcoder(qStruct, context, limits);
 		int8_t* encoded = new int8_t[img_size];
 		int c_out_size = 0;
 		Carcoder.encode(quanted, encoded, map, img_size, c_out_size);
@@ -374,6 +402,11 @@ private:
 		img.SetDataFromDouble(static_cast<double*>(inverted));
 		img.WriteBmp(out);
 
+		// write model data
+		FILE* model_file = fopen("model.bin", "w+b");
+		Carcoder.exportModelInformation(model_file);
+		fclose(model_file);
+
 		// tests
 		compareArrays(quanted, decoded, img_size);
 
@@ -384,6 +417,8 @@ private:
 		delete[] decoded;
 		delete[] deQuanted;
 		delete[] inverted;
+
+		printf("%d", c_out_size);
 	}
 
 	// @brief test context encode/decode with sign
@@ -443,7 +478,8 @@ private:
 	}
 
 	// @brief test sign context encode/decode
-	void test5(double i_q, int steps)
+	void test5(double i_q, int steps, double l1, double l2, double l3,
+				double s1, double s2)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -457,6 +493,16 @@ private:
 		int* quanted = new int[img_size];
 		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, i_q, map);
 
+		// prepare limits
+		Limits limits;
+		limits.push_back(l1);
+		limits.push_back(l2);
+		limits.push_back(l3);
+
+		Limits signLimits;
+		signLimits.push_back(s1);
+		signLimits.push_back(s2);
+
 		// encode
 		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
 		double ctempV[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
@@ -466,7 +512,7 @@ private:
 		context.maskH = ctempH;
 		context.maskV = ctempV;
 
-		SignContextArcoder Carcoder(qStruct, context, true);
+		SignContextArcoder Carcoder(qStruct, context, limits, signLimits, true);
 		int8_t* encoded = new int8_t[img_size];
 		int c_out_size = 0;
 		Carcoder.encode(quanted, encoded, map, img_size, c_out_size);
@@ -497,6 +543,8 @@ private:
 		delete[] decoded;
 		delete[] deQuanted;
 		delete[] inverted;
+
+		printf("%d", c_out_size);
 	}
 };
 
@@ -520,13 +568,27 @@ void _cdecl main(int argc, char **argv)
 			int testNumber = argv[1][0] - '0';
 			if (testNumber > 0 && testNumber <= 5)
 			{
-				testMgr.DoTest(testNumber, atoi(argv[4]), atoi(argv[5]));
+				if (argc > 8)
+				{
+					testMgr.DoTest(testNumber, atof(argv[4]),
+						atof(argv[5]), atof(argv[6]), atof(argv[7]),
+						atof(argv[8]), atof(argv[9]));
+				}
+				else if (argc > 5)
+				{
+					testMgr.DoTest(testNumber, atof(argv[4]),
+								   atof(argv[5]), atof(argv[6]), atof(argv[7]));
+				}
+				else
+				{
+					testMgr.DoTest(testNumber, atof(argv[4]));
+				}
 			}
 
 			if (argv[1][0] == '0')
 			{
 				// let's do all the tests
-				testMgr.DoTest(0, atoi(argv[4]));
+				testMgr.DoTest(0, atof(argv[4]));
 			}
 
 			fclose(in);

@@ -9,6 +9,17 @@ SignContextArcoder::SignContextArcoder(qMinCap qStruct,
 {
 }
 
+SignContextArcoder::SignContextArcoder(qMinCap qStruct,
+	Context3x3 i_context,
+	Limits limits,
+	Limits i_signLimits,
+	bool i__isContextForSignNeeded) :
+	ContextArcoder(qStruct, i_context, limits),
+	m_signLimits(i_signLimits),
+	m_isContextForSignNeeded(i__isContextForSignNeeded)
+{
+}
+
 void SignContextArcoder::reset_model()
 {
 	// reset models to work with extra subbands
@@ -24,10 +35,13 @@ void SignContextArcoder::reset_model()
 	conv.Initialize(m_qStruct.extraCapacity, m_qStruct.extraMin);
 
 	// add limits for sign encoding
-	m_signLimits.push_back(-15);
-	m_signLimits.push_back(-5);
-	m_signLimits.push_back(5);
-	m_signLimits.push_back(15);
+	if (m_signLimits.size() == 0)
+	{
+		//m_signLimits.push_back(-15);
+		m_signLimits.push_back(-0.6);
+		m_signLimits.push_back(0.6);
+		//m_signLimits.push_back(15);
+	}
 
 	if (m_isContextForSignNeeded)
 	{

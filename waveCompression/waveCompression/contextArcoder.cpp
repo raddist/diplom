@@ -16,9 +16,9 @@ ContextArcoder::ContextArcoder(qMinCap i_qMinCap, Context3x3 i_context) :
 	m_qStruct(i_qMinCap),
 	m_context(i_context)
 {
-	limits.push_back(0.2);
-	limits.push_back(1);
-	limits.push_back(10);
+	limits.push_back(0.1);
+	limits.push_back(1.1);
+	limits.push_back(3.5);
 }
 
 ///////////////////////////////////////////////////////////////////////

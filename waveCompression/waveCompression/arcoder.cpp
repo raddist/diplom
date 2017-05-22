@@ -136,27 +136,27 @@ inline void Arcoder::update_model(int symbol)
 /////////////////////////////////////////////////////////////////////////////////
 void Arcoder::exportModelInformation(FILE* i_file)
 {
-	unsigned int* output = new unsigned int[m_model.size() * (m_model[0].GetFreqSize())];
+	unsigned int* model_output = new unsigned int[m_model.size() * (m_model[0].GetFreqSize() + 1)+1];
 	int index = 0;
 
-	output[index] = m_model.size();
+	model_output[index] = m_model.size();
 	index++;
 	for (int i = 0; i < m_model.size(); ++i)
 	{
-		output[index] = m_model[i].GetFreqSize();
+		model_output[index] = m_model[i].GetFreqSize();
 		index++;
 
 		int freqSize = m_model[i].GetFreqSize();
 		unsigned int* tempFreq = m_model[i].GetFreqData();
 		for (int j = 0; j < freqSize; ++j)
 		{
-			output[index] = tempFreq[j];
+			model_output[index] = tempFreq[j];
 			++index;
 		}
 	}
 
-	fwrite(output, sizeof(*output), index, i_file);
-	delete[] output;
+	fwrite(model_output, sizeof(*model_output), index, i_file);
+	delete[] model_output;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

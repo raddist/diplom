@@ -119,7 +119,7 @@ for i = 1:N
         end
     end
     fclose(fid);
-    J = imread('goldhill.jp2')
+    J = imread('goldhill.jp2');
     psnr(i,2) = myPSNR(I,J);
     bpp(i,6) = cnt / size(I,1) / size(I,2) * 8;
 

@@ -7,6 +7,9 @@ class SignContextArcoder : public ContextArcoder
 public:
 
 	SignContextArcoder(qMinCap qStruct, Context3x3 i_context, bool i__isContextForSignNeeded = false);
+	SignContextArcoder(qMinCap qStruct, Context3x3 i_context, 
+						Limits i_limits, Limits i_signLimits,
+						bool i__isContextForSignNeeded = false);
 
 	virtual void reset_model() override;
 
@@ -57,6 +60,6 @@ public:
 private:
 	bool m_isContextForSignNeeded;
 
-	std::vector<double> m_signLimits;
+	Limits m_signLimits;
 };
 
