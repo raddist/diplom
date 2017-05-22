@@ -2,7 +2,8 @@ function checkTests
 
 quant = 25;
 % load original image
-I = imread('lena.bmp');
+imageName  = 'goldhill.bmp';
+I = imread(imageName);
 
 % lets find num of tests
 command = strcat('waveCompression.exe c');
@@ -10,7 +11,7 @@ command = strcat('waveCompression.exe c');
 numOfTests = str2num(w);
 
 % canonical test
-command = strcat('waveCompression.exe 1 lena.bmp test.bmp',32,num2str(quant));
+command = strcat('waveCompression.exe 1',32,imageName,32,'test.bmp',32,num2str(quant));
 system(command);
 
 %compare images
@@ -22,7 +23,7 @@ pause();
 
 % do all the tests
 for i = 2:numOfTests
-    command = strcat('waveCompression.exe',32,num2str(i),32,'lena.bmp test.bmp',32,num2str(quant));
+    command = strcat('waveCompression.exe',32,num2str(i),32,imageName,32,'test.bmp',32,num2str(quant));
     system(command);
     
     %compare images

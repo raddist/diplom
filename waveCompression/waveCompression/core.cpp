@@ -18,39 +18,39 @@ public:
 
 	}
 
-	void DoTest(int i_test, int i_q = 0)
+	void DoTest(int i_test, int i_q = 1, int i_steps = 4)
 	{
 		switch (i_test)
 		{
 		case 0:
 		{
 			//do all tests
-			test0(i_q);
+			test0(i_q, i_steps);
 			break;
 		}
 		case 1:
 		{
-			test1();
+			test1(i_q, i_steps);
 			break;
 		}
 		case 2:
 		{
-			test2();
+			test2(i_q, i_steps);
 			break;
 		}
 		case 3:
 		{
-			test3();
+			test3(i_q, i_steps);
 			break;
 		}
 		case 4:
 		{
-			test4();
+			test4(i_q, i_steps);
 			break;
 		}
 		case 5:
 		{
-			test5();
+			test5(i_q, i_steps);
 			break;
 		}
 		}
@@ -63,7 +63,7 @@ public:
 private:
 
 	// @brief compare all arcoders
-	void test0(double i_q)
+	void test0(double i_q, int steps)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -78,16 +78,26 @@ private:
 		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, i_q, map);
 
 		// preapare for encode/decode
-		double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
-		double ctemp1[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		double ctemp[] = {	0.2, 0.4, 0.0 ,  
+							0.0, 0.0, 0.0 ,  
+							0.0, 0.0, 0.0 };
+		double ctemp1[] = { 0.4, 0.2, 0.4 ,  
+							0.1, 0.0, 0.0 ,  
+							0.0, 0.0, 0.0 };
 		Context3x3 context;
-		context.maskD = ctemp;
-		context.maskH = ctemp1;
-		context.maskV = ctemp1;
+		context.maskD = ctemp1;
+		context.maskH = ctemp;
+		context.maskV = ctemp;
 
-		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
-		double ctempV[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
-		double ctempD[] = { 0.2, 0.4, 0.0 ,  0.4, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
+		double ctempH[] = { 0.2, 0.4, 0.0 ,
+							0.4, 0.0, 0.0 ,
+							0.0, 0.0, 0.0 };
+		double ctempV[] = { 0.2, 0.4, 0.0 ,
+							0.4, 0.0, 0.0 ,
+							0.0, 0.0, 0.0 };
+		double ctempD[] = { 0.4, 0.2, 0.4 ,
+							0.0, 0.0, 0.0 ,
+							0.0, 0.0, 0.0 };
 		Context3x3 context_2;
 		context_2.maskD = ctempD;
 		context_2.maskH = ctempH;
@@ -217,18 +227,18 @@ private:
 	}
 
 	// @brief test standart encode/decode
-	void test1()
+	void test1(double i_q, int steps)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
 
 		// using wavelet
 		double* transformed = new double[img_size];
-		waveletTransform2D(img.GetDoubleData(), transformed, img.GetWidth(), img.GetHeight(), 4);
+		waveletTransform2D(img.GetDoubleData(), transformed, img.GetWidth(), img.GetHeight(), steps);
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
+		qMinCap qStruct = quantilization(transformed, quanted, img_size, i_q);
 
 		// encode
 		int8_t* encoded = new int8_t[img_size];
@@ -243,11 +253,11 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 28);
+		deQuantilization(decoded, deQuanted, img_size, i_q);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
-		waveletInvert2D(deQuanted, inverted, img.GetWidth(), img.GetHeight(), 4);
+		waveletInvert2D(deQuanted, inverted, img.GetWidth(), img.GetHeight(), steps);
 
 		img.SetDataFromDouble(static_cast<double*>(inverted));
 		img.WriteBmp(out);
@@ -274,7 +284,7 @@ private:
 	}
 
 	// @brief test mapped encode/decode with memory
-	void test2()
+	void test2(double i_q, int steps)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -285,7 +295,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilization(transformed, quanted, img_size, 28);
+		qMinCap qStruct = quantilization(transformed, quanted, img_size, i_q);
 
 		// encode
 		int8_t* encoded = new int8_t[img_size];
@@ -301,7 +311,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 28);
+		deQuantilization(decoded, deQuanted, img_size, i_q);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -322,7 +332,7 @@ private:
 	}
 
 	// @brief test context enocode/decode
-	void test3()
+	void test3(double i_q, int steps)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -334,7 +344,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, 28, map);
+		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, i_q, map);
 
 		// encode
 		double ctemp[] = { 0.4, 0.2, 0.4 ,  0.0, 0.0, 0.0 ,  0.0, 0.0, 0.0 };
@@ -355,7 +365,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 28);
+		deQuantilization(decoded, deQuanted, img_size, i_q);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -377,7 +387,7 @@ private:
 	}
 
 	// @brief test context encode/decode with sign
-	void test4()
+	void test4(double i_q, int steps)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -389,7 +399,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, 28, map);
+		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, i_q, map);
 
 		// encode
 		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
@@ -411,7 +421,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 28);
+		deQuantilization(decoded, deQuanted, img_size, i_q);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -433,7 +443,7 @@ private:
 	}
 
 	// @brief test sign context encode/decode
-	void test5()
+	void test5(double i_q, int steps)
 	{
 		BmpImage img(in, 1);
 		int img_size = img.GetWidth() * img.GetHeight();
@@ -445,7 +455,7 @@ private:
 
 		// quantilization
 		int* quanted = new int[img_size];
-		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, 28, map);
+		qMinCap qStruct = quantilizationByMap(transformed, quanted, img_size, i_q, map);
 
 		// encode
 		double ctempH[] = { 0.2, 0.0, 0.0 ,  0.4, 0.0, 0.0 ,  0.2, 0.0, 0.0 };
@@ -468,7 +478,7 @@ private:
 
 		// quantilization
 		double* deQuanted = new double[img_size];
-		deQuantilization(decoded, deQuanted, img_size, 28);
+		deQuantilization(decoded, deQuanted, img_size, i_q);
 
 		// using wavelet invert
 		double* inverted = new double[img_size];
@@ -510,7 +520,7 @@ void _cdecl main(int argc, char **argv)
 			int testNumber = argv[1][0] - '0';
 			if (testNumber > 0 && testNumber <= 5)
 			{
-				testMgr.DoTest(testNumber);
+				testMgr.DoTest(testNumber, atoi(argv[4]), atoi(argv[5]));
 			}
 
 			if (argv[1][0] == '0')

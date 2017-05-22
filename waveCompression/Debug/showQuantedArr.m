@@ -1,9 +1,9 @@
 function showQuantedArr()
 
-quant = 28;
+quant = 20;
 
 % canonical test
-command = strcat('waveCompression.exe 1 boat.bmp test.bmp',32,num2str(quant));
+command = strcat('waveCompression.exe 1 lena.bmp test.bmp',32,num2str(quant),32,'4');
 system(command);
 
 [arr height width] = loadArrFromFile('quanted.bin');
@@ -13,6 +13,10 @@ min = arr(1,1);
 max = min;
 extra_min = 0;
 extra_max = 0;
+maxDiff = 0;
+diffamp = 4*88;
+diffArr = zeros(1,diffamp*2+1);
+
 for (i = 1:1:height)
     for (j = 1:1:width)
         if (i < 33 && j < 33)
@@ -28,6 +32,15 @@ for (i = 1:1:height)
             end
             if (extra_max < arr(i,j))
                 extra_max = arr(i,j);
+            end
+        end
+        
+        if (j>1 && i>1 && i<33 && j<33)
+            tmp = arr(i-1,j-1)/2 + (arr(i,j-1) + arr(i-1,j))/4;
+            tmp = tmp - arr(i,j);
+            diffArr(floor(tmp) + diffamp) = diffArr(floor(tmp) + diffamp) + 1;
+            if (abs(tmp) > maxDiff)
+                maxDiff = tmp;
             end
         end
     end

@@ -16,7 +16,7 @@ void SignContextArcoder::reset_model()
 	m_numOfModelsNeeded = limits.size() + 1;
 
 	int modelSize = (abs(m_qStruct.extraMin) > m_qStruct.extraCapacity + m_qStruct.extraMin) ? 
-		abs(m_qStruct.extraMin) + 1 : m_qStruct.arrCapacity + m_qStruct.extraMin + 1;
+		abs(m_qStruct.extraMin) + 1 : m_qStruct.extraCapacity + m_qStruct.extraMin + 1;
 	for (int i = 0; i < m_numOfModelsNeeded; ++i)
 	{
 		m_model.emplace_back(modelSize);
