@@ -1,7 +1,7 @@
 function arr = loadModels()
 
-command = strcat('waveCompression.exe 3 goldhill.bmp test4.bmp'...
-        ,32,'20 0.09 1 3');
+command = strcat('waveCompression.exe 5 goldhill.bmp test4.bmp'...
+        ,32,'20 0.09 1.1 3.5 -0.5 0.5');
 [q w] = system(command);
 fid = fopen('model.bin', 'rb');
 if fid == -1 

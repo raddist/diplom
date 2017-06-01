@@ -31,7 +31,7 @@ public:
 
 	void DoTest(int i_test, double i_q = 1.0,
 				double l1 = 0.1, double l2 = 1.1, double l3 = 3.5,
-				double s1 = -0.6, double s2 = 0.6)
+				double s1 = -1.5, double s2 = 1.5)
 	{
 		//processLimits(l1, l2, l3, i_q);
 		switch (i_test)
@@ -533,8 +533,10 @@ private:
 		img.SetDataFromDouble(static_cast<double*>(inverted));
 		img.WriteBmp(out);
 
-		// tests
-		compareArrays(quanted, decoded, img_size);
+		// write model data
+		FILE* model_file = fopen("model.bin", "w+b");
+		Carcoder.exportModelInformation(model_file);
+		fclose(model_file);
 
 		// realloc
 		delete[] transformed;

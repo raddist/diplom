@@ -38,8 +38,8 @@ void SignContextArcoder::reset_model()
 	if (m_signLimits.size() == 0)
 	{
 		//m_signLimits.push_back(-15);
-		m_signLimits.push_back(-0.6);
-		m_signLimits.push_back(0.6);
+		m_signLimits.push_back(-1.5);
+		m_signLimits.push_back(1.5);
 		//m_signLimits.push_back(15);
 	}
 
