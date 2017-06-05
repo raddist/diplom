@@ -1,6 +1,6 @@
 function [psnr bpp] = plotPSNR
 
-imageName  = 'goldhill.bmp';
+imageName  = 'barbara.bmp';
 I = imread(imageName);
 quant = 10; %10
 quality = 75;
@@ -34,6 +34,9 @@ for i = 1:N
     J = imread('test4.bmp');
     bpp(i,1) = cnt / size(I,1) / size(I,2) * 8;
     psnr(i,1) = myPSNR(I,J);
+    
+    figure();
+    imshow(J);
     
     % one-model
     fid = fopen('encoded.bin', 'rb');
@@ -166,8 +169,9 @@ grid on;
 xlabel('bpp');
 ylabel('PSNR');
 title('image compression');
-axis([0 1.2 25 36]);
-%axis([0 0.8 26 38]);
+%axis([0 1.2 25 36]); %goldhill
+%axis([0 0.8 26 38]); %lena
+axis([0 1.25 23 35]); %barbara
 legend('кодирование без памяти',...
     'контекстное кодирование',...
     'знаковое контекстное кодирование',...
